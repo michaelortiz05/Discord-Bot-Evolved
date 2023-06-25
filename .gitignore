@@ -1,0 +1,6 @@
+auth.txt
+config.json
+.env
+.eslintrc.json
+node_modules/
+
