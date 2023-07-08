@@ -4,8 +4,8 @@ const { createReadStream } = require('node:fs');
 const { demuxProbe, createAudioResource, createAudioPlayer, AudioPlayerStatus } = require('@discordjs/voice');
 
 class Player {
-	constructor(guild) {
-		this.guild = guild;
+	constructor() {
+		// this.guild = guild;
 		this.queue = [];
 		this.player = createAudioPlayer();
 		this.player.on('error', error => {
@@ -71,3 +71,4 @@ class Player {
 		this.queue = [];
 	}
 }
+module.exports = Player;

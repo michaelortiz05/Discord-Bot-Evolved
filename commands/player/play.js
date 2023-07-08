@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const { ytdl } = require('ytdl-core');
 const { yts } = require('yt-search');
 const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
+const player = require('../../index');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -10,7 +11,7 @@ module.exports = {
 		.addStringOption(option =>
 			option
 				.setName('source')
-				.setDescription('audio  source to play ')
+				.setDescription('audio source to play ')
 				.setRequired(true)),
 	async execute(interaction) {
 		if (!getVoiceConnection(interaction.channel.guild.id)) {
@@ -21,8 +22,10 @@ module.exports = {
 			});
 		}
 		const source = interaction.options.getString('source');
+		console.log(source);
+		// eslint-disable-next-line no-empty
 		if (ytdl.validateURL(source)) {
-
+			player.addSong(source);
 		}
 		else {
 			const r = await yts(source);
