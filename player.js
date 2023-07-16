@@ -58,6 +58,7 @@ class Player {
 		if (!this.isPlaying) {
 			this.playNextSong();
 		}
+        return 0;
     }
 
 	async probeAndCreateResource(readableStream) {
