@@ -1,6 +1,8 @@
 auth.txt
 config.json
 .env
-.eslintrc.json
+.eslintrc.json*
 node_modules/
+.DS_Store
+tmp/
 
