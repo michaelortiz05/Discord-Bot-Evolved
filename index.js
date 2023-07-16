@@ -1,14 +1,11 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { Client, Collection, GatewayIntentBits } = require('discord.js');
+const { Collection } = require('discord.js');
 const dotenv = require('dotenv');
-const Player = require('./player');
-const botEmitter = require('./events');
 dotenv.config();
 const token = process.env.TOKEN;
 
-// Create a new client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const { client } = require('./manager');
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
@@ -46,10 +43,3 @@ for (const file of eventFiles) {
 
 // Log in to Discord with your client's token
 client.login(token);
-
-botEmitter.on('destroy', () => {
-	client.destroy();
-});
-
-const player = new Player();
-module.exports = { player };

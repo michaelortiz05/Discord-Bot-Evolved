@@ -51,6 +51,15 @@ class Player {
 		}
 	}
 
+    async addTTS(TTS_FILE_PATH) {
+        const resource = await this.probeAndCreateResource(createReadStream(TTS_FILE_PATH));
+
+		this.queue.push({ name : tts, audio : resource });
+		if (!this.isPlaying) {
+			this.playNextSong();
+		}
+    }
+
 	async probeAndCreateResource(readableStream) {
 		const { stream, type } = await demuxProbe(readableStream);
 		return createAudioResource(stream, { inputType: type });
