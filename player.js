@@ -66,24 +66,10 @@ class Player {
 
 	addSong(stream) {
 		// Get info about the video
-		const resource = createAudioResource(stream, { inlineVolume: true });
-		resource.volume.setVolume(0.5);
+
+		const resource = createAudioResource(stream.stream, { inputType: stream.type });
 		this.player.play(resource);
 
-		// this.player.play(stream);
-		// console.log(generateDependencyReport());
-		// this.player.play(createAudioResource(stream));
-
-		// const resource = await this.probeAndCreateResource(createReadStream(stream));
-		// const type = stream.headers['content-type'] || stream.headers['Content-Type'];
-		// if (!type || !type.startsWith('audio/webm')) {
-		// 	// Transcode the stream to Opus with FFmpeg
-		// 	resource = stream
-		// 		.pipe(new prism.FFmpeg({
-		// 			args: ['-analyzeduration', '0', '-loglevel', '0', '-f', 's16le', '-ar', '48000', '-ac', '2'],
-		// 		}))
-		// 		.pipe(new prism.opus.Encoder({ rate: 48000, channels: 2, frameSize: 960 }));
-		// }
 		// const audioResource = this.probeAndCreateResource(stream);
 		// this.queue.push({ name: title, audio: audioResource });
 		// if (!this.isPlaying) {

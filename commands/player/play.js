@@ -1,6 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const ytdl = require('ytdl-core');
-const { yts } = require('yt-search');
+const playdl = require('play-dl');
 const { player, joinUserChannel } = require('../../manager');
 
 module.exports = {
@@ -17,25 +16,33 @@ module.exports = {
 		const connection = joinUserChannel(interaction);
 		if (connection instanceof Error) return;
 
-		player.subscribeToConnection(connection);
-
 		const source = interaction.options.getString('source');
 
-		if (ytdl.validateURL(source)) {
-			const info = await ytdl.getInfo(source);
-			const title = info.videoDetails.title;
-			console.log(`Now playing: ${title}`);
+		if (playdl.yt_validate(source) == 'search') {
+			const res = await playdl.search(source, { source: { youtube : 'video' }, limit: 1 });
+			const videoUrl = res[0].url;
 
-			const stream = ytdl(source, { filter: 'audioonly' });
-
-
+			player.subscribeToConnection(connection);
+			const stream = await playdl.stream(videoUrl);
 			player.addSong(stream);
-			interaction.reply(`***Now Playing:*** ${title}`);
+
+			interaction.reply(`*Now Playing:*  ${videoUrl}`);
 		}
+		else if (playdl.yt_validate(source) == 'video') {
+			player.subscribeToConnection(connection);
+			const stream = await playdl.stream(source);
+			player.addSong(stream);
+
+			interaction.reply(`*Now Playing:*  ${source}`);
+		}
+		// TODO add playlist support
+		// else if (playdl.yt_validate(source) == 'playlist') {
+		// }
+
 		// TODO test \/ \/
-		else {
-			const r = await yts(source);
-			console.log(r);
-		}
+		// else {
+		// 	const r = await yts(source);
+		// 	console.log(r);
+		// }
 	},
 };
