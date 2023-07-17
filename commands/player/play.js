@@ -19,6 +19,7 @@ module.exports = {
 				channelId: interaction.channel.id,
 				guildId: interaction.channel.guild.id,
 				adapterCreator: interaction.channel.guild.voiceAdapterCreator,
+				selfDeaf: false
 			});
 		}
 		const source = interaction.options.getString('source');

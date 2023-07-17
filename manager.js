@@ -20,6 +20,7 @@ function joinUserChannel(interaction) {
             channelId: interaction.member.voice.channel.id,
             guildId: interaction.channel.guild.id,
             adapterCreator: interaction.channel.guild.voiceAdapterCreator,
+            selfDeaf: false
         });
         return connection;
     }
