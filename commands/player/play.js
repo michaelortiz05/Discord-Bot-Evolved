@@ -1,8 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { ytdl } = require('ytdl-core');
+const ytdl = require('ytdl-core');
 const { yts } = require('yt-search');
-const { joinVoiceChannel, getVoiceConnection } = require('@discordjs/voice');
-const player = require('../../index');
+const { player, joinUserChannel } = require('../../manager');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -13,21 +12,27 @@ module.exports = {
 				.setName('source')
 				.setDescription('audio source to play ')
 				.setRequired(true)),
+
 	async execute(interaction) {
-		if (!getVoiceConnection(interaction.channel.guild.id)) {
-			const connection = joinVoiceChannel({
-				channelId: interaction.channel.id,
-				guildId: interaction.channel.guild.id,
-				adapterCreator: interaction.channel.guild.voiceAdapterCreator,
-				selfDeaf: false
-			});
-		}
+		const connection = joinUserChannel(interaction);
+		if (connection instanceof Error) return;
+
+		player.subscribeToConnection(connection);
+
 		const source = interaction.options.getString('source');
-		console.log(source);
-		// eslint-disable-next-line no-empty
+
 		if (ytdl.validateURL(source)) {
-			player.addSong(source);
+			const info = await ytdl.getInfo(source);
+			const title = info.videoDetails.title;
+			console.log(`Now playing: ${title}`);
+
+			const stream = ytdl(source, { filter: 'audioonly' });
+
+
+			player.addSong(stream);
+			interaction.reply(`***Now Playing:*** ${title}`);
 		}
+		// TODO test \/ \/
 		else {
 			const r = await yts(source);
 			console.log(r);

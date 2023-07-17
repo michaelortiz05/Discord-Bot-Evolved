@@ -18,7 +18,7 @@ module.exports = {
 		if (connection instanceof Error) return;
 
 		const tts_text = interaction.options.getString('text');
-		await saveFile(tts_text);
+		await saveFile(TTS_FILE_PATH, tts_text);
 
 
 		player.playTTS(TTS_FILE_PATH, connection);
@@ -30,11 +30,11 @@ module.exports = {
 	},
 };
 
-function saveFile(tts_text) {
+function saveFile(tts_file_path, tts_text) {
 	return new Promise((resolve, reject) => {
 		const tts = new gTTS(tts_text, 'en');
 
-		tts.save(TTS_FILE_PATH, function(err) {
+		tts.save(tts_file_path, function(err) {
 			if (err) {
 				return reject(err);
 			}

@@ -1,7 +1,6 @@
-const { ytdl } = require('ytdl-core');
 // const { prism } = require('prism-media');
 const { createReadStream } = require('node:fs');
-const { demuxProbe, createAudioResource, createAudioPlayer, AudioPlayerStatus } = require('@discordjs/voice');
+const { demuxProbe, createAudioResource, createAudioPlayer, AudioPlayerStatus, generateDependencyReport } = require('@discordjs/voice');
 const { unlink } = require('node:fs');
 
 class Player {
@@ -24,57 +23,58 @@ class Player {
 		});
 		this.isPlaying = false;
 
+		this.endOfQueueSettings = {
+			ttsFilePath: '',
+			connection: null,
+		};
 		this.player.on(AudioPlayerStatus.Idle, () => {
 			console.log('Attempting to play next song');
-			if (!this.playNextSong()) {
+			if (this.playNextSong()) {
 				this.endOfQueueEvent();
 			}
 		});
 	}
 
 	endOfQueueEvent() {
-		// unlink(tts_file_path, (err) => {
-		// 	if (err) {
-		// 		console.log('No TTS file to delete');
-		// 	}
-		// 	console.log('TTS file deleted');
-		// });
+		if (this.endOfQueueSettings.ttsFilePath) {
+			unlink(this.endOfQueueSettings.ttsFilePath, (err) => {
+				if (err) {
+					console.log('No TTS file to delete');
+				}
+				console.log('TTS file deleted');
+			});
+			this.endOfQueueSettings.ttsFilePath = '';
+		}
+
+		if (this.endOfQueueSettings.connection) {
+			this.endOfQueueSettings.connection.destroy();
+		}
 	}
 
 	playTTS(tts_file_path, connection) {
 		connection.subscribe(this.player);
 		this.player.play(createAudioResource(tts_file_path));
 
-
-		// TODO format this listener to handle music as well!!
-		this.player.on(AudioPlayerStatus.Idle, () => {
-			console.log('Attempting to play next song');
-
-			if (!this.playNextSong()) {
-				// old connection instance is locked in the eventlistener
-				// I need a way to make this variable
-				// connection.destroy();
-				unlink(tts_file_path, (err) => {
-					if (err) {
-						console.log('No TTS file to delete');
-					}
-					console.log('TTS file deleted');
-				});
-			}
-		});
+		this.endOfQueueSettings.ttsFilePath = tts_file_path;
+		this.endOfQueueSettings.connection = connection;
 	}
 
-	async addSong(url) {
-		// Get info about the video
-		const info = await ytdl.getInfo(url);
-		const title = info.videoDetails.title;
-		console.log(`Now playing: ${title}`);
+	subscribeToConnection(connection) {
+		connection.subscribe(this.player);
+		this.endOfQueueSettings.connection = connection;
+	}
 
-		const stream = ytdl.downloadFromInfo(info, {
-			quality: 'highestaudio',
-			highWaterMark: 1 << 25,
-		});
-		const resource = await this.probeAndCreateResource(createReadStream(stream));
+	addSong(stream) {
+		// Get info about the video
+		const resource = createAudioResource(stream, { inlineVolume: true });
+		resource.volume.setVolume(0.5);
+		this.player.play(resource);
+
+		// this.player.play(stream);
+		// console.log(generateDependencyReport());
+		// this.player.play(createAudioResource(stream));
+
+		// const resource = await this.probeAndCreateResource(createReadStream(stream));
 		// const type = stream.headers['content-type'] || stream.headers['Content-Type'];
 		// if (!type || !type.startsWith('audio/webm')) {
 		// 	// Transcode the stream to Opus with FFmpeg
@@ -84,11 +84,11 @@ class Player {
 		// 		}))
 		// 		.pipe(new prism.opus.Encoder({ rate: 48000, channels: 2, frameSize: 960 }));
 		// }
-
-		this.queue.push({ name: title, audio: resource });
-		if (!this.isPlaying) {
-			this.playNextSong();
-		}
+		// const audioResource = this.probeAndCreateResource(stream);
+		// this.queue.push({ name: title, audio: audioResource });
+		// if (!this.isPlaying) {
+		// 	this.playNextSong();
+		// }
 	}
 
 	async probeAndCreateResource(readableStream) {
