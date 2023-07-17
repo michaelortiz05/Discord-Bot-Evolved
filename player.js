@@ -1,7 +1,7 @@
 const { ytdl } = require('ytdl-core');
 // const { prism } = require('prism-media');
 const { createReadStream } = require('node:fs');
-const { demuxProbe, createAudioResource, createAudioPlayer, AudioPlayerStatus, NoSubscriberBehavior } = require('@discordjs/voice');
+const { demuxProbe, createAudioResource, createAudioPlayer, AudioPlayerStatus } = require('@discordjs/voice');
 const { unlink } = require('node:fs');
 
 class Player {
@@ -9,7 +9,7 @@ class Player {
 		// this.guild = guild;
 		this.queue = [];
 		this.player = createAudioPlayer();
-		this.player.on('error', error => {
+		this.player.on('error', (error) => {
 			console.error('Error:', error.message);
 		});
 		// this.player.on(AudioPlayerStatus.Playing, (os, ns) => {
@@ -24,32 +24,45 @@ class Player {
 		});
 		this.isPlaying = false;
 
-        this.ttsListenerCreated = false;
+		this.player.on(AudioPlayerStatus.Idle, () => {
+			console.log('Attempting to play next song');
+			if (!this.playNextSong()) {
+				this.endOfQueueEvent();
+			}
+		});
 	}
 
-    playTTS(tts_file_path, connection) {
-        connection.subscribe(this.player);
-        this.player.play(createAudioResource(tts_file_path));
-    
-        if (!this.ttsListenerCreated) {
-            
-            this.ttsListenerCreated = true;
-            // TODO format this listener to handle music as well!!
-            this.player.on(AudioPlayerStatus.Idle, () => {
-                console.log('Attempting to play next song');
-            
-                if (!this.playNextSong()) {
-                    // old connection instance is locked in the eventlistener
-                    // I need a way to make this variable
-                    // connection.destroy(); 
-                    unlink(tts_file_path, (err) => {
-                        if (err) { console.log('No TTS file to delete') };
-                        console.log('TTS file deleted');
-                    });
-                }
-            });
-        }
-    }
+	endOfQueueEvent() {
+		// unlink(tts_file_path, (err) => {
+		// 	if (err) {
+		// 		console.log('No TTS file to delete');
+		// 	}
+		// 	console.log('TTS file deleted');
+		// });
+	}
+
+	playTTS(tts_file_path, connection) {
+		connection.subscribe(this.player);
+		this.player.play(createAudioResource(tts_file_path));
+
+
+		// TODO format this listener to handle music as well!!
+		this.player.on(AudioPlayerStatus.Idle, () => {
+			console.log('Attempting to play next song');
+
+			if (!this.playNextSong()) {
+				// old connection instance is locked in the eventlistener
+				// I need a way to make this variable
+				// connection.destroy();
+				unlink(tts_file_path, (err) => {
+					if (err) {
+						console.log('No TTS file to delete');
+					}
+					console.log('TTS file deleted');
+				});
+			}
+		});
+	}
 
 	async addSong(url) {
 		// Get info about the video
@@ -72,7 +85,7 @@ class Player {
 		// 		.pipe(new prism.opus.Encoder({ rate: 48000, channels: 2, frameSize: 960 }));
 		// }
 
-		this.queue.push({ name : title, audio : resource });
+		this.queue.push({ name: title, audio: resource });
 		if (!this.isPlaying) {
 			this.playNextSong();
 		}
@@ -88,7 +101,7 @@ class Player {
 			this.isPlaying = true;
 			const song = this.queue.shift();
 			this.player.play(song.audio);
-            return true;
+			return true;
 		}
 		else {
 			return false;

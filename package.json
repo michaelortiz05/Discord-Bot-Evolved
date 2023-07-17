@@ -22,6 +22,7 @@
     "ytdl-core": "^4.11.4"
   },
   "devDependencies": {
-    "eslint": "^8.43.0"
+    "eslint": "^8.45.0",
+    "eslint-config-google": "^0.14.0"
   }
 }
