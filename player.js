@@ -2,16 +2,13 @@ const { ytdl } = require('ytdl-core');
 // const { prism } = require('prism-media');
 const { createReadStream } = require('node:fs');
 const { demuxProbe, createAudioResource, createAudioPlayer, AudioPlayerStatus, NoSubscriberBehavior } = require('@discordjs/voice');
+const { unlink } = require('node:fs');
 
 class Player {
 	constructor() {
 		// this.guild = guild;
 		this.queue = [];
-		this.player = createAudioPlayer({
-            behaviors: {
-                noSubscriber: NoSubscriberBehavior.Play,
-            },
-        });
+		this.player = createAudioPlayer();
 		this.player.on('error', error => {
 			console.error('Error:', error.message);
 		});
@@ -25,18 +22,33 @@ class Player {
 		this.player.on('stateChange', (oldState, newState) => {
 			console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
 		});
-        this.player.on('error', error => {
-            console.error(error);
-        });
 		this.isPlaying = false;
+
+        this.ttsListenerCreated = false;
 	}
 
-    subscribeToConnection(connection) {
+    playTTS(tts_file_path, connection) {
         connection.subscribe(this.player);
-    }
-
-    playTTS() {
-        this.player.play(createAudioResource('tmp/tts.mp3'));
+        this.player.play(createAudioResource(tts_file_path));
+    
+        if (!this.ttsListenerCreated) {
+            
+            this.ttsListenerCreated = true;
+            // TODO format this listener to handle music as well!!
+            this.player.on(AudioPlayerStatus.Idle, () => {
+                console.log('Attempting to play next song');
+            
+                if (!this.playNextSong()) {
+                    // old connection instance is locked in the eventlistener
+                    // I need a way to make this variable
+                    // connection.destroy(); 
+                    unlink(tts_file_path, (err) => {
+                        if (err) { console.log('No TTS file to delete') };
+                        console.log('TTS file deleted');
+                    });
+                }
+            });
+        }
     }
 
 	async addSong(url) {
@@ -76,9 +88,10 @@ class Player {
 			this.isPlaying = true;
 			const song = this.queue.shift();
 			this.player.play(song.audio);
+            return true;
 		}
 		else {
-			console.error('Song queue is empty!');
+			return false;
 		}
 	}
 

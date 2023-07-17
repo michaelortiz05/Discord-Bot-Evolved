@@ -2,6 +2,8 @@ const { SlashCommandBuilder, Client } = require('discord.js');
 const gTTS = require('gtts');
 const { player, joinUserChannel } = require('../../manager');
 
+const fs = require('node:fs');
+
 const TTS_FILE_PATH = 'tmp/tts.mp3';
 
 module.exports = {
@@ -19,17 +21,25 @@ module.exports = {
         if (connection instanceof Error) return;
 
         const tts_text = interaction.options.getString('text');
-        // const tts = await new gTTS(tts_text, 'en');
-        // await tts.save(TTS_FILE_PATH, function (err, result) {
-        //     if(err) { throw new Error(err) }
-        //     console.log('TTS request completed');
-        // });   
+        await saveFile(tts_text);
+
+
+        player.playTTS(TTS_FILE_PATH, connection);
 
         interaction.reply('*\"' + tts_text + '\"*');
 
-        await player.subscribeToConnection(connection);
-        await player.playTTS();
 
         // connection.destroy();
-	},
+	}
 };
+
+function saveFile(tts_text) {
+    return new Promise((resolve, reject) => {
+        const tts = new gTTS(tts_text, 'en');
+
+        tts.save(TTS_FILE_PATH, function (err, result) {
+            if(err) { return reject(err); }
+            else { return resolve(); }
+        })
+    });
+}
