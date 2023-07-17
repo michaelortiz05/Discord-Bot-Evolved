@@ -11,18 +11,27 @@ class Player {
 		this.player.on('error', error => {
 			console.error('Error:', error.message);
 		});
-		this.player.on(AudioPlayerStatus.Playing, (os, ns) => {
-			console.log(`Went from ${os} to ${ns}`);
-		});
-		this.player.on(AudioPlayerStatus.Idle, () => {
-			console.log('Attempting to play next song');
-			this.playNextSong();
-		});
+		// this.player.on(AudioPlayerStatus.Playing, (os, ns) => {
+		// 	console.log(`Went from ${os} to ${ns}`);
+		// });
+		// this.player.on(AudioPlayerStatus.Idle, () => {
+		// 	console.log('Attempting to play next song');
+		// 	this.playNextSong();
+		// });
 		this.player.on('stateChange', (oldState, newState) => {
 			console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
 		});
 		this.isPlaying = false;
 	}
+
+    async subscribeToConnection(connection) {
+        connection.subscribe(this.player);
+    }
+
+    async playTTS() {
+        const resource = createAudioResource('tmp/tts.mp3');
+        this.player.play(resource);
+    }
 
 	async addSong(url) {
 		// Get info about the video
@@ -50,16 +59,6 @@ class Player {
 			this.playNextSong();
 		}
 	}
-
-    async addTTS(TTS_FILE_PATH) {
-        const resource = await this.probeAndCreateResource(createReadStream(TTS_FILE_PATH));
-
-		this.queue.push({ name : tts, audio : resource });
-		if (!this.isPlaying) {
-			this.playNextSong();
-		}
-        return 0;
-    }
 
 	async probeAndCreateResource(readableStream) {
 		const { stream, type } = await demuxProbe(readableStream);
