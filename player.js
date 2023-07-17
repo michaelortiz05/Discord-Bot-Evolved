@@ -1,13 +1,17 @@
 const { ytdl } = require('ytdl-core');
 // const { prism } = require('prism-media');
 const { createReadStream } = require('node:fs');
-const { demuxProbe, createAudioResource, createAudioPlayer, AudioPlayerStatus } = require('@discordjs/voice');
+const { demuxProbe, createAudioResource, createAudioPlayer, AudioPlayerStatus, NoSubscriberBehavior } = require('@discordjs/voice');
 
 class Player {
 	constructor() {
 		// this.guild = guild;
 		this.queue = [];
-		this.player = createAudioPlayer();
+		this.player = createAudioPlayer({
+            behaviors: {
+                noSubscriber: NoSubscriberBehavior.Play,
+            },
+        });
 		this.player.on('error', error => {
 			console.error('Error:', error.message);
 		});
@@ -21,16 +25,18 @@ class Player {
 		this.player.on('stateChange', (oldState, newState) => {
 			console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
 		});
+        this.player.on('error', error => {
+            console.error(error);
+        });
 		this.isPlaying = false;
 	}
 
-    async subscribeToConnection(connection) {
+    subscribeToConnection(connection) {
         connection.subscribe(this.player);
     }
 
-    async playTTS() {
-        const resource = createAudioResource('tmp/tts.mp3');
-        this.player.play(resource);
+    playTTS() {
+        this.player.play(createAudioResource('tmp/tts.mp3'));
     }
 
 	async addSong(url) {

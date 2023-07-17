@@ -19,8 +19,8 @@ module.exports = {
         if (connection instanceof Error) return;
 
         const tts_text = interaction.options.getString('text');
-        // const tts = new gTTS(tts_text, 'en');
-        // tts.save(TTS_FILE_PATH, function (err, result) {
+        // const tts = await new gTTS(tts_text, 'en');
+        // await tts.save(TTS_FILE_PATH, function (err, result) {
         //     if(err) { throw new Error(err) }
         //     console.log('TTS request completed');
         // });   
@@ -28,7 +28,7 @@ module.exports = {
         interaction.reply('*\"' + tts_text + '\"*');
 
         await player.subscribeToConnection(connection);
-        player.playTTS();
+        await player.playTTS();
 
         // connection.destroy();
 	},
