@@ -1,12 +1,12 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { client_destroy } = require('../../manager');
+const { destroy } = require('../../client');
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('destroy')
 		.setDescription('Destroy bot client and logout'),
 	async execute(interaction) {
-		client_destroy();
+		destroy();
 		interaction.reply('Bot Taken Offline');
 	},
 };

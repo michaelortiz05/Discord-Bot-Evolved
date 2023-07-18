@@ -1,12 +1,12 @@
 const { SlashCommandBuilder } = require('discord.js');
 const gTTS = require('gtts');
-const { player, joinUserChannel } = require('../../manager');
+const { player } = require('../../objects');
 
 const TTS_FILE_PATH = 'tmp/tts.mp3';
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('tts')
-		.setDescription('Converts text to speech')
+		.setDescription('Converts Text to Speech')
 		.addStringOption((option) =>
 			option
 				.setName('text')
@@ -14,14 +14,12 @@ module.exports = {
 				.setRequired(true)),
 
 	async execute(interaction) {
-		const connection = joinUserChannel(interaction);
-		if (connection instanceof Error) return;
+		player.subscribeToConnection(interaction);
 
 		const tts_text = interaction.options.getString('text');
 		await saveFile(TTS_FILE_PATH, tts_text);
 
-
-		player.playTTS(TTS_FILE_PATH, connection);
+		player.playTTS(TTS_FILE_PATH);
 
 		interaction.reply('*"' + tts_text + '"*');
 

@@ -1,11 +1,11 @@
 const { SlashCommandBuilder } = require('discord.js');
 const playdl = require('play-dl');
-const { player, joinUserChannel } = require('../../manager');
+const { player } = require('../../objects');
 
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('play')
-		.setDescription('Play a youtube link')
+		.setDescription('Play a Song via YouTube')
 		.addStringOption(option =>
 			option
 				.setName('source')
@@ -13,36 +13,31 @@ module.exports = {
 				.setRequired(true)),
 
 	async execute(interaction) {
-		const connection = joinUserChannel(interaction);
-		if (connection instanceof Error) return;
 
 		const source = interaction.options.getString('source');
 
 		if (playdl.yt_validate(source) == 'search') {
 			const res = await playdl.search(source, { source: { youtube : 'video' }, limit: 1 });
-			const videoUrl = res[0].url;
+			const url = res[0].url;
+			const title = res[0].title;
 
-			player.subscribeToConnection(connection);
-			const stream = await playdl.stream(videoUrl);
-			player.addSong(stream);
+			player.subscribeToConnection(interaction);
+			const stream = await playdl.stream(url);
 
-			interaction.reply(`*Now Playing:*  ${videoUrl}`);
+			player.addSong(title, stream, url);
+
+			interaction.reply(`*Added to Queue:*  ${title}`);
 		}
 		else if (playdl.yt_validate(source) == 'video') {
-			player.subscribeToConnection(connection);
+			player.subscribeToConnection(interaction);
 			const stream = await playdl.stream(source);
-			player.addSong(stream);
+			const info = (await playdl.video_basic_info(source)).video_details;
+			const url = info.url;
+			const title = info.title;
 
-			interaction.reply(`*Now Playing:*  ${source}`);
+			player.addSong(title, stream, url);
+
+			interaction.reply(`*Added to Queue:*  ${title}`);
 		}
-		// TODO add playlist support
-		// else if (playdl.yt_validate(source) == 'playlist') {
-		// }
-
-		// TODO test \/ \/
-		// else {
-		// 	const r = await yts(source);
-		// 	console.log(r);
-		// }
 	},
 };
