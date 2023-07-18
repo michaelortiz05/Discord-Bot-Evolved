@@ -5,11 +5,11 @@ const { player } = require('../../objects');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('play')
-		.setDescription('Play a Song via YouTube')
+		.setDescription('Add a Song to the Queue')
 		.addStringOption(option =>
 			option
 				.setName('source')
-				.setDescription('audio source to play ')
+				.setDescription('audio source to play')
 				.setRequired(true)),
 
 	async execute(interaction) {
@@ -21,23 +21,22 @@ module.exports = {
 			const url = res[0].url;
 			const title = res[0].title;
 
+			interaction.reply(`*Added to Queue:*  **${title}**`);
+
 			player.subscribeToConnection(interaction);
 			const stream = await playdl.stream(url);
-
 			player.addSong(title, stream, url);
-
-			interaction.reply(`*Added to Queue:*  ${title}`);
 		}
 		else if (playdl.yt_validate(source) == 'video') {
-			player.subscribeToConnection(interaction);
-			const stream = await playdl.stream(source);
 			const info = (await playdl.video_basic_info(source)).video_details;
 			const url = info.url;
 			const title = info.title;
 
-			player.addSong(title, stream, url);
-
 			interaction.reply(`*Added to Queue:*  ${title}`);
+
+			player.subscribeToConnection(interaction);
+			const stream = await playdl.stream(source);
+			player.addSong(title, stream, url);
 		}
 	},
 };

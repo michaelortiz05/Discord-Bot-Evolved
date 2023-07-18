@@ -8,8 +8,8 @@ class Player {
 		this.queue = [];
 		this.player = createAudioPlayer();
 
-		this.currentSong = {};
-		this.isPlaying = false;
+		this.currentSong = null;
+		this.songPlaying = false;
 		this.connection = null;
 		this.ttsFilePath = '';
 		this.textChannelId = 0;
@@ -79,7 +79,7 @@ class Player {
 		const resource = createAudioResource(stream.stream, { inputType: stream.type });
 
 		this.queue.push({ title: title, audio: resource, url: url });
-		if (!this.isPlaying) {
+		if (!this.songPlaying) {
 			this.playNextSong();
 		}
 	}
@@ -91,29 +91,47 @@ class Player {
 
 	playNextSong() {
 
-		// TODO add announcement when new song is playing
+		// if there are songs left in the queue
 		if (this.queue.length > 0) {
-			this.isPlaying = true;
+			this.songPlaying = true;
 
 			this.currentSong = this.queue.shift();
 			this.player.play(this.currentSong.audio);
 
-			sendMessage(this.textChannelId, `*Now Playing:*  ${this.currentSong.url}`);
+			sendMessage(this.textChannelId, `*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
 
 			return true;
 		}
+		// // if this is the last song in the queue
+		// else if (this.songPlaying) {
+		// 	this.player.stop();
+		// 	this.songPlaying = false;
+		// 	return false;
+		// }
+		// //
 		else {
-			this.currentSong = {};
+			this.player.stop();
+			this.currentSong = null;
+			this.songPlaying = false;
 			return false;
 		}
 	}
 
+	returnCurrentSong() {
+		return this.currentSong;
+	}
+
 	returnQueue() {
-		return [ this.currentSong, this.queue ];
+		return this.queue;
+	}
+
+	isPlaying() {
+		return this.songPlaying;
 	}
 
 	clearQueue() {
 		this.queue = [];
 	}
 }
+
 module.exports = Player;
