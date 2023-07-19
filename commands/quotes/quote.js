@@ -2,7 +2,6 @@ const { SlashCommandBuilder } = require('discord.js');
 const { sendMessage } = require('../../client');
 const config = require('../../config.json');
 
-
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('quote')
