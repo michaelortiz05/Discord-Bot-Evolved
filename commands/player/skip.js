@@ -7,10 +7,14 @@ module.exports = {
 		.setDescription('Skips the Current Song in the Queue'),
 
 	async execute(interaction) {
-
-		const currentSong = player.returnCurrentSong();
-		player.playNextSong();
-		interaction.reply(`*Skipping Song —* **${currentSong.title}**`);
+		if (player.isPlaying()) {
+			const currentSong = player.returnCurrentSong();
+			player.playNextSong();
+			interaction.reply(`*Skipping Song —* **${currentSong.title}**`);
+		}
+		else {
+			interaction.reply('*No Songs in Queue!*');
+		}
 	},
 };
 

@@ -56,7 +56,7 @@ module.exports = {
 
 		// could add invitations here, but server is small enough where this won't matter
 
-		const yesButtion = new ButtonBuilder()
+		const yesButton = new ButtonBuilder()
 			.setCustomId('yes')
 			.setLabel('Yes')
 			.setStyle(ButtonStyle.Primary);
@@ -65,7 +65,7 @@ module.exports = {
 			.setLabel('No')
 			.setStyle(ButtonStyle.Secondary);
 		const responsesRow = new ActionRowBuilder()
-			.addComponents(yesButtion, noButton);
+			.addComponents(yesButton, noButton);
 
 		interaction.reply({
 			content: title,

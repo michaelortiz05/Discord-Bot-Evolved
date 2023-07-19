@@ -13,6 +13,7 @@ class Player {
 		this.connection = null;
 		this.ttsFilePath = '';
 		this.textChannelId = 0;
+		this.currentSong = -1;
 
 		this.player.on('error', (error) => {
 			console.error('Error:', error.message);
