@@ -1,19 +1,20 @@
-const { demuxProbe, createAudioResource, createAudioPlayer, AudioPlayerStatus, joinVoiceChannel } = require('@discordjs/voice');
+const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel } = require('@discordjs/voice');
 const { unlink } = require('node:fs');
 const { sendMessage } = require('./client');
 
 class Player {
 	constructor() {
-		// this.guild = guild;
-		this.queue = [];
-		this.player = createAudioPlayer();
 
+		this.player = createAudioPlayer();
+		this.queue = [];
+		this.songIndex = -1;
 		this.currentSong = null;
-		this.songPlaying = false;
 		this.connection = null;
 		this.ttsFilePath = '';
-		this.textChannelId = 0;
-		this.currentSong = -1;
+
+		this.settings = {
+			loop: false,
+		};
 
 		this.player.on('error', (error) => {
 			console.error('Error:', error.message);
@@ -24,10 +25,8 @@ class Player {
 		});
 
 		this.player.on(AudioPlayerStatus.Idle, () => {
-			console.log('Attempting to play next song');
-			if (!this.playNextSong()) {
-				this.endOfQueueEvent();
-			}
+			this.playNextSong();
+			if (!this.isPlaying()) { this.endOfQueueEvent(); }
 		});
 	}
 
@@ -47,6 +46,7 @@ class Player {
 			this.connection = null;
 		}
 
+		sendMessage(this.textChannelId, '*Queue Has Ended — No More Songs in Queue');
 	}
 
 	subscribeToConnection(interaction) {
@@ -80,54 +80,48 @@ class Player {
 		const resource = createAudioResource(stream.stream, { inputType: stream.type });
 
 		this.queue.push({ title: title, audio: resource, url: url });
-		if (!this.songPlaying) {
+		if (!this.isPlaying()) {
+			console.log('playing next song...');
 			this.playNextSong();
 		}
 	}
 
-	async probeAndCreateResource(readableStream) {
-		const { stream, type } = await demuxProbe(readableStream);
-		return createAudioResource(stream, { inputType: type });
-	}
-
 	playNextSong() {
+		this.songIndex += 1;
+		if (this.songIndex < this.queue.length) {
 
-		// if there are songs left in the queue
-		if (this.queue.length > 0) {
-			this.songPlaying = true;
-
-			this.currentSong = this.queue.shift();
+			this.currentSong = this.queue[this.songIndex];
 			this.player.play(this.currentSong.audio);
 
 			sendMessage(this.textChannelId, `*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
-
-			return true;
 		}
-		// // if this is the last song in the queue
-		// else if (this.songPlaying) {
-		// 	this.player.stop();
-		// 	this.songPlaying = false;
-		// 	return false;
-		// }
-		// //
+		else if (this.settings.loop == true) {
+			this.songIndex = -1;
+			this.playNextSong();
+		}
 		else {
 			this.player.stop();
-			this.currentSong = null;
-			this.songPlaying = false;
-			return false;
+			this.songIndex = -1;
+			this.queue = [];
+			// this is getting called twice -- I see no way to fix it as
+			//      it is being called simultaneously by the eventlistener
+			//      and /skip functions
 		}
 	}
 
 	returnCurrentSong() {
 		return this.currentSong;
 	}
-
+	returnSongIndex() {
+		return this.songIndex;
+	}
 	returnQueue() {
 		return this.queue;
 	}
 
 	isPlaying() {
-		return this.songPlaying;
+		if (this.songIndex == -1) { return false; }
+		else { return true; }
 	}
 
 	clearQueue() {
@@ -135,4 +129,4 @@ class Player {
 	}
 }
 
-module.exports = Player;
+module.exports = { Player };

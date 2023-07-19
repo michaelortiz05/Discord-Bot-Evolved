@@ -18,51 +18,33 @@ module.exports = {
 		interaction.reply('**Song Queue:**');
 		const textChannelId = interaction.channel.id;
 
-		let actionRowArr = [];
-		// let numButton = new ButtonBuilder()
-		// 	.setCustomId('1')
-		// 	.setLabel('▶️')
-		// 	.setStyle(ButtonStyle.Secondary)
-		// 	.setDisabled(true);
-		let songButton = new ButtonBuilder()
-			.setCustomId('name_1')
-			.setLabel(currentSong.title)
-			.setStyle(ButtonStyle.Primary);
-		let delSongButton = new ButtonBuilder()
-			.setCustomId('del_1')
-			.setLabel('❌')
-			.setStyle(ButtonStyle.Secondary);
-		actionRowArr.push(new ActionRowBuilder().addComponents(delSongButton, songButton));
-		sendMessage(textChannelId, { components: actionRowArr });
 
 		const queue = player.returnQueue();
-		console.log('queueLength = ' + queue.length);
+		const currSongIndex = player.returnSongIndex();
+
 		let i = 0;
 		while (i < queue.length) {
-			actionRowArr = [];
+			const actionRowArr = [];
 			const blockSize = Math.min(queue.length - i, 5);
-			console.log('blocksize = ' + blockSize);
 			const iCurr = i;
 			for (i; i < blockSize + iCurr; i++) {
-				console.log(i);
-				// numButton = new ButtonBuilder()
-				// 	.setCustomId((i + 2).toString())
-				// 	.setLabel(Numbers.toEmoji(i + 2))
-				// 	.setStyle(ButtonStyle.Secondary)
-				// 	.setDisabled(true);
-				songButton = new ButtonBuilder()
-					.setCustomId('name_' + (i + 2).toString())
-					.setLabel(queue[i].title)
-					.setStyle(ButtonStyle.Primary);
-				delSongButton = new ButtonBuilder()
-					.setCustomId('del_' + (i + 2).toString())
+				const delSongButton = new ButtonBuilder()
+					.setCustomId('del_' + (i).toString())
 					.setLabel('❌')
 					.setStyle(ButtonStyle.Secondary);
+				const songButton = new ButtonBuilder()
+					.setCustomId('name_' + (i).toString())
+					.setLabel(queue[i].title);
+				if (i == currSongIndex) {
+					songButton.setStyle(ButtonStyle.Success);
+				}
+				else {
+					songButton.setStyle(ButtonStyle.Primary);
+				}
 
 				actionRowArr.push(new ActionRowBuilder().addComponents(delSongButton, songButton));
 
 			}
-			// console.log(actionRowArr);
 			sendMessage(textChannelId, { components: actionRowArr });
 		}
 
