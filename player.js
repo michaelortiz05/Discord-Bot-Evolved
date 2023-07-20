@@ -1,6 +1,7 @@
 const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel } = require('@discordjs/voice');
 const { unlink } = require('node:fs');
 const { sendMessage } = require('./client');
+const playdl = require('play-dl');
 
 class Player {
 	constructor() {
@@ -87,6 +88,8 @@ class Player {
 	}
 
 	playNextSong() {
+		if (this.isPlaying()) { this.currentSong.audio = null; }
+
 		this.songIndex += 1;
 		if (this.songIndex < this.queue.length) {
 
@@ -107,6 +110,34 @@ class Player {
 			//      it is being called simultaneously by the eventlistener
 			//      and /skip functions
 		}
+	}
+
+	async playSong(songIndex) {
+		if (this.isPlaying()) { this.currentSong.audio = null; }
+
+		this.currentSong = this.queue[songIndex];
+
+		// this logic needs to exist as the streams are deleted after the song is played
+		if (this.currentSong.audio == null) {
+
+			// TODO move playdl dependencies into this file
+			const stream = await playdl.stream(this.currentSong.url);
+			const resource = createAudioResource(stream.stream, { inputType: stream.type });
+			this.currentSong.audio = resource;
+		}
+		this.songIndex = songIndex;
+		console.log(this.currentSong.title);
+		this.player.play(this.currentSong.audio);
+
+		sendMessage(this.textChannelId, `*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
+	}
+
+	deleteSong(songIndex) {
+		if (songIndex == this.songIndex) {
+			console.log('deleted song == current song');
+			this.playNextSong();
+		}
+		this.queue.splice(songIndex, 1);
 	}
 
 	returnCurrentSong() {

@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const { player } = require('../../objects');
 const { sendMessage } = require('../../client');
+const { buttonEmitter } = require('../../events/interactionCreate');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -18,7 +19,6 @@ module.exports = {
 		interaction.reply('**Song Queue:**');
 		const textChannelId = interaction.channel.id;
 
-
 		const queue = player.returnQueue();
 		const currSongIndex = player.returnSongIndex();
 
@@ -29,11 +29,11 @@ module.exports = {
 			const iCurr = i;
 			for (i; i < blockSize + iCurr; i++) {
 				const delSongButton = new ButtonBuilder()
-					.setCustomId('del_' + (i).toString())
+					.setCustomId('songDel_' + (i).toString())
 					.setLabel('❌')
 					.setStyle(ButtonStyle.Secondary);
 				const songButton = new ButtonBuilder()
-					.setCustomId('name_' + (i).toString())
+					.setCustomId('songName_' + (i).toString())
 					.setLabel(queue[i].title);
 				if (i == currSongIndex) {
 					songButton.setStyle(ButtonStyle.Success);
@@ -43,32 +43,17 @@ module.exports = {
 				}
 
 				actionRowArr.push(new ActionRowBuilder().addComponents(delSongButton, songButton));
-
 			}
 			sendMessage(textChannelId, { components: actionRowArr });
 		}
 
+		buttonEmitter.on('songName', (songIndex) => {
+			player.playSong(songIndex);
+		});
 
-		// responseString = `*Currently Playing —* **${currentSong.title}**\n`;
-		// for (let i = 0; i < queue.length; i++) {
-		// 	responseString += `*Position ${i + 2} —* **${queue[i].title}**\n`;
-		// 	// interaction.reply(responseString);
-
-		// 	const actionRowArr = [];
-
-		// 	for (let i = 0; i < 5; i++) {
-		// 		const numberButton = new ButtonBuilder()
-		// 			.setCustomId(i.toString())
-		// 			.setLabel(i.toString())
-		// 			.setStyle(ButtonStyle.Primary);
-		// 		const songButton = new ButtonBuilder()
-		// 			.setCustomId('name' + i.toString())
-		// 			.setLabel('this is a name + ' + i.toString())
-		// 			.setStyle(ButtonStyle.Secondary);
-		//
-		// 	}
-
-
+		buttonEmitter.on('songDel', (songIndex) => {
+			player.deleteSong(songIndex);
+		});
 	},
 };
 

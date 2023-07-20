@@ -15,6 +15,7 @@
     "any-date-parser": "^1.5.4",
     "discord.js": "^14.11.0",
     "dotenv": "^16.3.1",
+    "events": "^3.3.0",
     "ffmpeg-static": "^5.1.0",
     "gtts": "^0.2.1",
     "libsodium-wrappers": "^0.7.11",
