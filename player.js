@@ -87,6 +87,9 @@ class Player {
 		}
 	}
 
+	// this is getting called twice when the queue ends -- I see no
+	//      way to fix it as it is being called simultaneously by the
+	//      eventlistener and /skip functions
 	playNextSong() {
 		if (this.isPlaying()) { this.currentSong.audio = null; }
 
@@ -106,9 +109,6 @@ class Player {
 			this.player.stop();
 			this.songIndex = -1;
 			this.queue = [];
-			// this is getting called twice -- I see no way to fix it as
-			//      it is being called simultaneously by the eventlistener
-			//      and /skip functions
 		}
 	}
 
@@ -136,6 +136,9 @@ class Player {
 		if (songIndex == this.songIndex) {
 			console.log('deleted song == current song');
 			this.playNextSong();
+		}
+		if (songIndex <= this.songIndex) {
+			this.songIndex -= 1;
 		}
 		this.queue.splice(songIndex, 1);
 	}

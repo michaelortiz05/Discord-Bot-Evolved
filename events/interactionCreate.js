@@ -31,6 +31,8 @@ async function execute(interaction) {
 
 		console.log('emitting: ' + buttonType);
 		buttonEmitter.emit(buttonType, buttonNum);
+
+		// buttonEmitter.emit('pressed');
 	}
 	// can duplicate this for other interactions (reactions, select menus, etc.)
 }

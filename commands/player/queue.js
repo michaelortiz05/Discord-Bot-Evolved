@@ -3,6 +3,10 @@ const { player } = require('../../objects');
 const { sendMessage } = require('../../client');
 const { buttonEmitter } = require('../../events/interactionCreate');
 
+const delSongButtons = [];
+const songButtons = [];
+const queueMessages = [];
+
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('queue')
@@ -15,45 +19,74 @@ module.exports = {
 			interaction.reply('*Queue is Empty*');
 			return;
 		}
-
 		interaction.reply('**Song Queue:**');
+
 		const textChannelId = interaction.channel.id;
 
 		const queue = player.returnQueue();
-		const currSongIndex = player.returnSongIndex();
 
-		let i = 0;
-		while (i < queue.length) {
-			const actionRowArr = [];
-			const blockSize = Math.min(queue.length - i, 5);
-			const iCurr = i;
-			for (i; i < blockSize + iCurr; i++) {
-				const delSongButton = new ButtonBuilder()
-					.setCustomId('songDel_' + (i).toString())
-					.setLabel('❌')
-					.setStyle(ButtonStyle.Secondary);
-				const songButton = new ButtonBuilder()
-					.setCustomId('songName_' + (i).toString())
-					.setLabel(queue[i].title);
-				if (i == currSongIndex) {
-					songButton.setStyle(ButtonStyle.Success);
-				}
-				else {
-					songButton.setStyle(ButtonStyle.Primary);
-				}
-
-				actionRowArr.push(new ActionRowBuilder().addComponents(delSongButton, songButton));
+		for (let i = 0; i < queue.length; i++) {
+			delSongButtons.push(new ButtonBuilder()
+				.setCustomId('songDel_' + (i).toString())
+				.setLabel('❌')
+				.setStyle(ButtonStyle.Secondary));
+			songButtons.push(new ButtonBuilder()
+				.setCustomId('songName_' + (i).toString())
+				.setLabel(queue[i].title));
+			if (i == player.returnSongIndex()) {
+				songButtons[i].setStyle(ButtonStyle.Success);
 			}
-			sendMessage(textChannelId, { components: actionRowArr });
+			else {
+				songButtons[i].setStyle(ButtonStyle.Primary);
+			}
 		}
+		let actionRowArr = [];
+		for (let i = 0; i < queue.length; i++) {
+			actionRowArr.push(new ActionRowBuilder().addComponents(delSongButtons[i], songButtons[i]));
+			if (i % 5 == 4 || i == queue.length) {
+				queueMessages.push(sendMessage(textChannelId, { components: actionRowArr }));
+				actionRowArr = [];
+			}
+		}
+		buttonEmitter.on('songDel', (songIndex) => {
+			player.deleteSong(songIndex);
+			// deleteButton(queue.length, songIndex);
+		});
 
 		buttonEmitter.on('songName', (songIndex) => {
 			player.playSong(songIndex);
 		});
-
-		buttonEmitter.on('songDel', (songIndex) => {
-			player.deleteSong(songIndex);
-		});
 	},
 };
 
+// rerendering queue
+// problem for later
+
+// function deleteButton(queueLength, songIndex) {
+// 	delSongButtons.splice(songIndex, 1);
+// 	songButtons.splice(songIndex, 1);
+// 	queueLength -= 1;
+
+// 	const currentSongIndex = player.returnSongIndex();
+
+// 	for (let i = 0; i < queueLength; i++) {
+// 		delSongButtons[i].setCustomId('songDel_' + (i).toString());
+// 		songButtons[i].setCustomId('songName_' + (i).toString());
+// 	}
+// 	if (songIndex == currentSongIndex) {
+// 		for (let i = 0; i < queueLength; i++) {
+// 			if (i == currentSongIndex) {
+// 				songButtons[i].setStyle(ButtonStyle.Success);
+// 			}
+// 			else {
+// 				songButtons[i].setStyle(ButtonStyle.Primary);
+// 			}
+// 		}
+// 	}
+// }
+
+// function reRenderQueue(queueLength) {
+// 	for (let i = 0; i < queueLength; i++) {
+
+// 	}
+// }

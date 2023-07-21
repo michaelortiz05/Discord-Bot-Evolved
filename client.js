@@ -9,7 +9,7 @@ function destroy() {
 }
 
 function sendMessage(channelId, message) {
-	client.channels.cache.get(channelId).send(message);
+	return client.channels.cache.get(channelId).send(message);
 }
 
 module.exports = { client, destroy, sendMessage };
