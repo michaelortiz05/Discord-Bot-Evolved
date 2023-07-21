@@ -5,7 +5,6 @@ const { buttonEmitter } = require('../../events/interactionCreate');
 
 const delSongButtons = [];
 const songButtons = [];
-const queueMessages = [];
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -22,6 +21,7 @@ module.exports = {
 		interaction.reply('**Song Queue:**');
 
 		const textChannelId = interaction.channel.id;
+		const queueMessages = [];
 
 		const queue = player.returnQueue();
 
@@ -40,17 +40,18 @@ module.exports = {
 				songButtons[i].setStyle(ButtonStyle.Primary);
 			}
 		}
+		let i = 0;
 		let actionRowArr = [];
-		for (let i = 0; i < queue.length; i++) {
+		while (i < queue.length) {
 			actionRowArr.push(new ActionRowBuilder().addComponents(delSongButtons[i], songButtons[i]));
-			if (i % 5 == 4 || i == queue.length) {
+			i += 1;
+			if (i % 5 == 0 || i == queue.length) {
 				queueMessages.push(sendMessage(textChannelId, { components: actionRowArr }));
 				actionRowArr = [];
 			}
 		}
 		buttonEmitter.on('songDel', (songIndex) => {
 			player.deleteSong(songIndex);
-			// deleteButton(queue.length, songIndex);
 		});
 
 		buttonEmitter.on('songName', (songIndex) => {
@@ -59,7 +60,7 @@ module.exports = {
 	},
 };
 
-// rerendering queue
+// re-rendering queue
 // problem for later
 
 // function deleteButton(queueLength, songIndex) {
