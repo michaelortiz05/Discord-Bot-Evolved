@@ -56,6 +56,7 @@ class Player {
 		}
 
 		if (interaction.member.voice.channel == null) {
+			// TODO this currently errors out
 			interaction.reply('User must be in voice channel!');
 			return new Error('noConnection');
 		}
@@ -143,6 +144,9 @@ class Player {
 		this.queue.splice(songIndex, 1);
 	}
 
+	returnSong(index) {
+		return this.queue[index];
+	}
 	returnCurrentSong() {
 		return this.currentSong;
 	}

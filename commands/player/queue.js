@@ -3,8 +3,7 @@ const { player } = require('../../objects');
 const { sendMessage } = require('../../client');
 const { buttonEmitter } = require('../../events/interactionCreate');
 
-const delSongButtons = [];
-const songButtons = [];
+let queueMessages = [];
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -18,76 +17,68 @@ module.exports = {
 			interaction.reply('*Queue is Empty*');
 			return;
 		}
-		interaction.reply('**Song Queue:**');
+		interaction.reply('*Song Queue:*');
 
 		const textChannelId = interaction.channel.id;
-		const queueMessages = [];
+		renderMessages(textChannelId);
 
-		const queue = player.returnQueue();
-
-		for (let i = 0; i < queue.length; i++) {
-			delSongButtons.push(new ButtonBuilder()
-				.setCustomId('songDel_' + (i).toString())
-				.setLabel('❌')
-				.setStyle(ButtonStyle.Secondary));
-			songButtons.push(new ButtonBuilder()
-				.setCustomId('songName_' + (i).toString())
-				.setLabel(queue[i].title));
-			if (i == player.returnSongIndex()) {
-				songButtons[i].setStyle(ButtonStyle.Success);
-			}
-			else {
-				songButtons[i].setStyle(ButtonStyle.Primary);
-			}
-		}
-		let i = 0;
-		let actionRowArr = [];
-		while (i < queue.length) {
-			actionRowArr.push(new ActionRowBuilder().addComponents(delSongButtons[i], songButtons[i]));
-			i += 1;
-			if (i % 5 == 0 || i == queue.length) {
-				queueMessages.push(sendMessage(textChannelId, { components: actionRowArr }));
-				actionRowArr = [];
-			}
-		}
 		buttonEmitter.on('songDel', (songIndex) => {
+			buttonEmitter.removeAllListeners('songDel');
+			buttonEmitter.removeAllListeners('songName');
+			deleteMessages();
+			interaction.editReply(`*deleted*  **${player.returnSong(songIndex).title}**`);
 			player.deleteSong(songIndex);
+			// renderMessages(textChannelId); <-- Strange behavior
 		});
 
 		buttonEmitter.on('songName', (songIndex) => {
+			buttonEmitter.removeAllListeners('songDel');
+			buttonEmitter.removeAllListeners('songName');
+			interaction.editReply('*Changed Current Song*');
 			player.playSong(songIndex);
+			deleteMessages();
 		});
 	},
 };
 
-// re-rendering queue
-// problem for later
+function deleteMessages() {
+	for (const message of queueMessages) {
+		message.delete();
+	}
+	queueMessages = [];
+}
 
-// function deleteButton(queueLength, songIndex) {
-// 	delSongButtons.splice(songIndex, 1);
-// 	songButtons.splice(songIndex, 1);
-// 	queueLength -= 1;
+async function renderMessages(textChannelId) {
+	const queue = player.returnQueue();
 
-// 	const currentSongIndex = player.returnSongIndex();
+	// TODO only render updates
+	const delSongButtons = [];
+	const songButtons = [];
 
-// 	for (let i = 0; i < queueLength; i++) {
-// 		delSongButtons[i].setCustomId('songDel_' + (i).toString());
-// 		songButtons[i].setCustomId('songName_' + (i).toString());
-// 	}
-// 	if (songIndex == currentSongIndex) {
-// 		for (let i = 0; i < queueLength; i++) {
-// 			if (i == currentSongIndex) {
-// 				songButtons[i].setStyle(ButtonStyle.Success);
-// 			}
-// 			else {
-// 				songButtons[i].setStyle(ButtonStyle.Primary);
-// 			}
-// 		}
-// 	}
-// }
+	for (let i = 0; i < queue.length; i++) {
+		delSongButtons.push(new ButtonBuilder()
+			.setCustomId('songDel_' + (i).toString())
+			.setLabel('❌')
+			.setStyle(ButtonStyle.Secondary));
+		songButtons.push(new ButtonBuilder()
+			.setCustomId('songName_' + (i).toString())
+			.setLabel(queue[i].title));
+		if (i == player.returnSongIndex()) {
+			songButtons[i].setStyle(ButtonStyle.Success);
+		}
+		else {
+			songButtons[i].setStyle(ButtonStyle.Primary);
+		}
+	}
 
-// function reRenderQueue(queueLength) {
-// 	for (let i = 0; i < queueLength; i++) {
-
-// 	}
-// }
+	let i = 0;
+	let actionRowArr = [];
+	while (i < queue.length) {
+		actionRowArr.push(new ActionRowBuilder().addComponents(delSongButtons[i], songButtons[i]));
+		i += 1;
+		if (i % 5 == 0 || i == queue.length) {
+			queueMessages.push(await sendMessage(textChannelId, { components: actionRowArr }));
+			actionRowArr = [];
+		}
+	}
+}
