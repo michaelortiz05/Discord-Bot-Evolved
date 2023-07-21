@@ -5,6 +5,8 @@ const { buttonEmitter } = require('../../events/interactionCreate');
 
 let queueMessages = [];
 
+// TODO these buttons work, but the queue gets out of whack when it auto-plays the next song
+
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('queue')
@@ -17,16 +19,14 @@ module.exports = {
 			interaction.reply('*Queue is Empty*');
 			return;
 		}
-		interaction.reply('*Song Queue:*');
 
-		const textChannelId = interaction.channel.id;
-		renderMessages(textChannelId);
+		renderMessages(interaction);
 
 		buttonEmitter.on('songDel', (songIndex) => {
 			buttonEmitter.removeAllListeners('songDel');
 			buttonEmitter.removeAllListeners('songName');
 			deleteMessages();
-			interaction.editReply(`*deleted*  **${player.returnSong(songIndex).title}**`);
+			interaction.editReply(`*Removed from Queue: *  **${player.returnSong(songIndex).title}**`);
 			player.deleteSong(songIndex);
 			// renderMessages(textChannelId); <-- Strange behavior
 			// probably need to edit the messages rather than rerendering a totally new queue
@@ -49,7 +49,11 @@ function deleteMessages() {
 	queueMessages = [];
 }
 
-async function renderMessages(textChannelId) {
+async function renderMessages(interaction) {
+
+	interaction.reply('*Song Queue:*');
+
+	const textChannelId = interaction.channel.id;
 	const queue = player.returnQueue();
 
 	// TODO only render updates
@@ -81,4 +85,7 @@ async function renderMessages(textChannelId) {
 			actionRowArr = [];
 		}
 	}
+
+	// queueTitle = await queueTitle;
+	// queueTitle.react('🔁');
 }

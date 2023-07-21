@@ -94,16 +94,17 @@ class Player {
 	playNextSong() {
 		if (this.isPlaying()) { this.currentSong.audio = null; }
 
-		this.songIndex += 1;
+		this.songIndex = Math.floor(this.songIndex + 1);
 		if (this.songIndex < this.queue.length) {
 
 			this.currentSong = this.queue[this.songIndex];
-			this.player.play(this.currentSong.audio);
+			this.play();
 
 			sendMessage(this.textChannelId, `*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
 		}
 		else if (this.settings.loop == true) {
 			this.songIndex = -1;
+
 			this.playNextSong();
 		}
 		else {
@@ -113,32 +114,35 @@ class Player {
 		}
 	}
 
-	async playSong(songIndex) {
+	playSong(songIndex) {
 		if (this.isPlaying()) { this.currentSong.audio = null; }
 
 		this.currentSong = this.queue[songIndex];
+		this.songIndex = songIndex;
+		this.play();
 
-		// this logic needs to exist as the streams are deleted after the song is played
+		sendMessage(this.textChannelId, `*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
+	}
+	async play() {
+		console.log(`Song Index: ${this.songIndex} || Queue Length: ${this.queue.length}`);
+
+		// remakes stream if it has been deleted
 		if (this.currentSong.audio == null) {
-
-			// TODO move playdl dependencies into this file
 			const stream = await playdl.stream(this.currentSong.url);
 			const resource = createAudioResource(stream.stream, { inputType: stream.type });
 			this.currentSong.audio = resource;
 		}
-		this.songIndex = songIndex;
-		console.log(this.currentSong.title);
 		this.player.play(this.currentSong.audio);
-
-		sendMessage(this.textChannelId, `*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
 	}
 
 	deleteSong(songIndex) {
+		console.log('Deleting Song: ' + this.queue[songIndex].title);
 		if (songIndex == this.songIndex) {
 			console.log('deleted song == current song');
 			this.playNextSong();
 		}
 		if (songIndex <= this.songIndex) {
+			this.currentSong = null;
 			this.songIndex -= 1;
 		}
 		this.queue.splice(songIndex, 1);
@@ -164,6 +168,11 @@ class Player {
 
 	clearQueue() {
 		this.queue = [];
+	}
+
+	changeSettings(setting, option) {
+		this.settings[setting] = option;
+		console.log(this.settings[setting]);
 	}
 }
 

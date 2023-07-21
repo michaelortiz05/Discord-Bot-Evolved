@@ -27,7 +27,7 @@ async function execute(interaction) {
 		const buttonId = interaction.customId;
 		const underscoreIndex = buttonId.indexOf('_');
 		const buttonType = buttonId.substring(0, underscoreIndex);
-		const buttonNum = buttonId.substring(underscoreIndex + 1, buttonId.length);
+		const buttonNum = parseInt(buttonId.substring(underscoreIndex + 1, buttonId.length));
 
 		console.log('emitting: ' + buttonType);
 		buttonEmitter.emit(buttonType, buttonNum);
