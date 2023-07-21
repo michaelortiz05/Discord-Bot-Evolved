@@ -29,6 +29,7 @@ module.exports = {
 			interaction.editReply(`*deleted*  **${player.returnSong(songIndex).title}**`);
 			player.deleteSong(songIndex);
 			// renderMessages(textChannelId); <-- Strange behavior
+			// probably need to edit the messages rather than rerendering a totally new queue
 		});
 
 		buttonEmitter.on('songName', (songIndex) => {
@@ -70,7 +71,6 @@ async function renderMessages(textChannelId) {
 			songButtons[i].setStyle(ButtonStyle.Primary);
 		}
 	}
-
 	let i = 0;
 	let actionRowArr = [];
 	while (i < queue.length) {
