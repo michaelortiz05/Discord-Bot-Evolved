@@ -45,9 +45,25 @@ class ChatBuilder {
         this.messages = [];
         if (systems != undefined) {
             this.addMessage("system", systems.base);
-            if (userid === process.env.GOD_EMPEROR)
-                this.addMessage("system", systems.godemperor);
+            let sys = this.getSystemById(userid, systems);
+            console.log(sys);
+            if (sys != undefined)
+                this.addMessage("system", sys);
         }
+    }
+    getSystemById(userid, systems) {
+        let system;
+        switch(userid) {
+            case process.env.GOD_EMPEROR:
+                system = systems.godemperor;
+                break;
+            case process.env.MAX:
+                system = systems.max;
+                break;
+            default:
+                break;
+        }
+        return system;
     }
     addMessage(role, content) {
         this.messages.push({
