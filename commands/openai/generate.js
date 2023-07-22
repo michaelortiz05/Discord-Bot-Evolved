@@ -18,7 +18,11 @@ module.exports = {
                 size: "1024x1024",
             });
             imageurl = response.data.data[0].url;
-            await interaction.followUp(imageurl);
+            // await interaction.followUp(imageurl);
+            await interaction.followUp(
+            { files: [
+            {attachment: imageurl, name: "dalle.png"},
+            ]});
         } catch (error) {
             if (error.response) {
                 console.log(error.response.status);
