@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { openai } = require('../../objects');
+const { openai } = require('../../internals/ai-manager');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('generate')
