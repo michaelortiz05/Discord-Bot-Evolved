@@ -66,6 +66,8 @@ class ChatBuilder {
                 break;
             case process.env.RHETT:
                 system = systems.rhett;
+            case process.env.SEBA:
+                system = systems.seba;
             default:
                 break;
         }
