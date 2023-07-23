@@ -83,8 +83,20 @@ try {
 let chatManager = new ChatManager(tuning);
 
 // **update to use this and remove openai export**
-function generate() {
-
+async function generate(properties) {
+    try {
+        const response = await openai.createImage(properties);
+        imageurl = response.data.data[0].url;
+        return imageurl;
+    } catch (error) {
+        if (error.response) {
+            console.log(error.response.status);
+            console.log(error.response.data);
+        } 
+        else 
+            console.log(error.message);
+    }
+    return;
 }
 
-module.exports = { chatManager, openai };
+module.exports = { chatManager, generate };
