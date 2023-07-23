@@ -64,6 +64,8 @@ class ChatBuilder {
             case process.env.MAX:
                 system = systems.max;
                 break;
+            case process.env.RHETT:
+                system = systems.rhett;
             default:
                 break;
         }
