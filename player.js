@@ -123,6 +123,7 @@ class Player {
 
 		sendMessage(this.textChannelId, `*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
 	}
+
 	async play() {
 		console.log(`Song Index: ${this.songIndex} || Queue Length: ${this.queue.length}`);
 
@@ -142,7 +143,7 @@ class Player {
 			this.playNextSong();
 		}
 		if (songIndex <= this.songIndex) {
-			this.currentSong = null;
+			this.currentSong.audio = null;
 			this.songIndex -= 1;
 		}
 		this.queue.splice(songIndex, 1);
