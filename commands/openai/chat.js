@@ -13,7 +13,7 @@ module.exports = {
 	async execute(interaction) {
 		const userid = interaction.user.id;
         const message = interaction.options.getString('message');
-        await interaction.reply(`"${message}"...`);
+        await interaction.reply(`"${message}"`);
         const response = await chatManager.chat(userid, message);
         await interaction.followUp(response);
 	},

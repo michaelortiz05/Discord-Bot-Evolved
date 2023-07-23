@@ -38,6 +38,9 @@ class ChatManager {
             return "Oh no! Something went wrong!"
         }
     }
+    clearChat(userid) {
+        return this.chats.delete(userid);
+    }
 }
 
 class ChatBuilder {
@@ -45,6 +48,7 @@ class ChatBuilder {
         this.messages = [];
         if (systems != undefined) {
             this.addMessage("system", systems.base);
+            this.addMessage("system", systems.rp);
             let sys = this.getSystemById(userid, systems);
             console.log(sys);
             if (sys != undefined)
@@ -82,7 +86,7 @@ try {
 }
 let chatManager = new ChatManager(tuning);
 
-// **update to use this and remove openai export**
+// dalle generate function
 async function generate(properties) {
     try {
         const response = await openai.createImage(properties);
