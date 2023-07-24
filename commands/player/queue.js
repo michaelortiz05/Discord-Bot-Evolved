@@ -5,8 +5,6 @@ const { buttonEmitter } = require('../../events/interactionCreate');
 
 let queueMessages = [];
 
-// TODO these buttons work, but the queue gets out of whack when it auto-plays the next song
-
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('queue')
@@ -51,7 +49,7 @@ function deleteMessages() {
 
 async function renderMessages(interaction) {
 
-	interaction.reply('*Song Queue:*');
+	const queueTitle = interaction.reply({ content: '*Song Queue:*', fetchReply: true });
 
 	const textChannelId = interaction.channel.id;
 	const queue = player.returnQueue();
@@ -86,6 +84,9 @@ async function renderMessages(interaction) {
 		}
 	}
 
+	// const queueSettings = player.returnSettings();
+	// TODODODODO
 	// queueTitle = await queueTitle;
+	// console.log(queueTitle);
 	// queueTitle.react('🔁');
 }

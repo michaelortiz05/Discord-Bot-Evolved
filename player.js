@@ -162,6 +162,10 @@ class Player {
 		return this.queue;
 	}
 
+	returnSettings() {
+		return this.settings;
+	}
+
 	isPlaying() {
 		if (this.songIndex == -1) { return false; }
 		else { return true; }
