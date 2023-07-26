@@ -23,7 +23,7 @@ class Player {
 			seconds: 0,
 		};
 
-		this.queueClickEmitter = new EventEmitter();
+		this.queueDisplayEmitter = new EventEmitter();
 
 		this.player.on('error', (error) => {
 			console.error('Error:', error.message);
@@ -86,6 +86,8 @@ class Player {
 			this.connection.destroy();
 			this.connection = null;
 		}
+
+		this.queueDisplayEmitter.removeAllListeners();
 
 		sendMessage(this.textChannelId, '*Queue Has Ended — No More Songs in Queue');
 	}
@@ -221,8 +223,8 @@ class Player {
 		const queueMessages = [];
 		this.renderQueueMessages(interaction, queueMessages);
 
-		this.queueClickEmitter.emit('queueDisplay');
-		this.queueClickEmitter.once('queueDisplay', () => {
+		this.queueDisplayEmitter.emit('queueDisplay');
+		this.queueDisplayEmitter.once('queueDisplay', () => {
 			console.log('queueDisplay');
 			this.deleteQueueMessages(queueMessages);
 			interaction.deleteReply();
@@ -237,7 +239,7 @@ class Player {
 		buttonEmitter.on('songDel', (songIndex) => {
 			buttonEmitter.removeAllListeners('songDel');
 			buttonEmitter.removeAllListeners('songName');
-			this.queueClickEmitter.removeAllListeners('queueDisplay');
+			this.queueDisplayEmitter.removeAllListeners('queueDisplay');
 
 			this.deleteSong(songIndex);
 			this.deleteQueueMessages(queueMessages);
@@ -247,7 +249,7 @@ class Player {
 		buttonEmitter.on('songName', (songIndex) => {
 			buttonEmitter.removeAllListeners('songDel');
 			buttonEmitter.removeAllListeners('songName');
-			this.queueClickEmitter.removeAllListeners('queueDisplay');
+			this.queueDisplayEmitter.removeAllListeners('queueDisplay');
 
 			if (this.isPlaying()) { this.currentSong.audio = null; }
 			this.currentSong = this.queue[songIndex];
