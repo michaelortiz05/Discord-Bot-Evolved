@@ -66,6 +66,7 @@ class ChatBuilder {
 			break;
 		case process.env.SEBA:
 			system = systems.seba;
+			break;
 		default:
 			break;
 		}
@@ -93,7 +94,7 @@ const chatManager = new ChatManager(tuning);
 async function generate(properties) {
 	try {
 		const response = await openai.createImage(properties);
-		imageurl = response.data.data[0].url;
+		const imageurl = response.data.data[0].url;
 		return imageurl;
 	}
 	catch (error) {

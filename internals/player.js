@@ -3,8 +3,8 @@ const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const playdl = require('play-dl');
 const EventEmitter = require('events');
 
-const { sendMessage } = require('./client');
-const { buttonEmitter } = require('./events/interactionCreate');
+const { sendMessage } = require('./../client');
+const { buttonEmitter } = require('./../events/interactionCreate');
 const { unlink } = require('fs');
 
 class Player {
@@ -237,6 +237,7 @@ class Player {
 		buttonEmitter.on('songDel', (songIndex) => {
 			buttonEmitter.removeAllListeners('songDel');
 			buttonEmitter.removeAllListeners('songName');
+			this.queueClickEmitter.removeAllListeners('queueDisplay');
 
 			this.deleteSong(songIndex);
 			this.deleteQueueMessages(queueMessages);
@@ -246,6 +247,7 @@ class Player {
 		buttonEmitter.on('songName', (songIndex) => {
 			buttonEmitter.removeAllListeners('songDel');
 			buttonEmitter.removeAllListeners('songName');
+			this.queueClickEmitter.removeAllListeners('queueDisplay');
 
 			if (this.isPlaying()) { this.currentSong.audio = null; }
 			this.currentSong = this.queue[songIndex];
