@@ -71,7 +71,7 @@ Resources:
         - Key: Name
           Value: Odin Instance
       ImageId: !FindInMap [ RegionMap, !Ref AWS::Region, ALinux86 ]
-      InstanceType: t4g.small
+      InstanceType: t2.micro
       KeyName: !Ref KeyName
       IamInstanceProfile: !Ref DiscordBotInstanceProfile
       SecurityGroupIds: [ !Ref SSHInboundSG, !Ref HTTPInboundSG ]
@@ -93,6 +93,7 @@ Resources:
             sudo npm install \n
             cd .. \n
             chown ec2-user Discord-Bot-Evolved-main \n
+            node Discord-Bot-Evolved-main/index.js \n
             "
 
           - EnvBucketName: !Ref EnvBucketName

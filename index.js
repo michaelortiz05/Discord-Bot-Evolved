@@ -4,8 +4,9 @@ const { Collection } = require('discord.js');
 const dotenv = require('dotenv');
 dotenv.config();
 const token = process.env.TOKEN;
+const config = require('./config.json');
 
-const { client } = require('./client');
+const { client, sendMessage } = require('./client');
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
@@ -43,3 +44,4 @@ for (const file of eventFiles) {
 
 // Log in to Discord with your client's token
 client.login(token);
+sendMessage(config.notificationChannelId, '*Odin is online!*');
