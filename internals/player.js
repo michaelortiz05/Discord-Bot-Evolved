@@ -31,7 +31,6 @@ class Player {
 
 		this.player.on('stateChange', (oldState, newState) => {
 			if (newState.status == 'playing') {
-				console.log(newState.status);
 				console.log(`Audio player now playing: ${this.currentSong.title}`);
 			}
 			else {
@@ -99,7 +98,7 @@ class Player {
 		}
 		if (interaction.member.voice.channel == null) {
 			// TODO this currently errors out
-			interaction.reply('User must be in voice channel!');
+			interaction.editReply('User must be in voice channel!');
 			return new Error('noConnection');
 		}
 

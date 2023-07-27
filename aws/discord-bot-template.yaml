@@ -1,0 +1,157 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Discord Bot Evolved (Odin) CloudFormation Deployment
+
+Parameters:
+  EnvBucketName:
+    Type: String
+  DefaultVPCID:
+    Type: String
+  KeyName:
+    Type: String
+
+Mappings:
+  RegionMap:
+    ap-northeast-1:
+      ALinuxArm: ami-002eb0cce502117b2
+    ap-northeast-2:
+      ALinuxArm: ami-013e35012cb169cef
+    ap-northeast-3:
+      ALinuxArm: ami-03b8bb56070c11374
+    ap-south-1:
+      ALinuxArm: ami-0f203c26f765cfb32
+    ap-southeast-1:
+      ALinuxArm: ami-0f064a4c9f3e6c504
+    ap-southeast-2:
+      ALinuxArm: ami-037cd799fbb0578cf
+    ca-central-1:
+      ALinuxArm: ami-0d955517b1485ed00
+    eu-central-1:
+      ALinuxArm: ami-0d03a2d1b22041c13
+    eu-north-1:
+      ALinuxArm: ami-03da1616c1fc9d795
+    eu-west-1:
+      ALinuxArm: ami-0fa60ab544ecd97e0
+    eu-west-2:
+      ALinuxArm: ami-0cc7e32fa3b6695a5
+    eu-west-3:
+      ALinuxArm: ami-0e7dca26aea79122d
+    sa-east-1:
+      ALinuxArm: ami-0461cf0c292037658
+    us-east-1:
+      ALinuxArm: ami-0006abfd85caddf82
+    us-east-2:
+      ALinuxArm: ami-0e31d4ddf8c30fd2a
+    us-west-1:
+      ALinuxArm: ami-02df98ef10c8d0aa9
+    us-west-2:
+      ALinuxArm: ami-00b8975bc3de669d2
+
+Resources:
+  DiscordBotInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Odin Instance
+      ImageId: !FindInMap [ RegionMap, !Ref AWS::Region, ALinuxArm ]
+      InstanceType: t4g.small
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref DiscordBotInstanceProfile
+      SecurityGroupIds: [ !Ref SSHInboundSG, !Ref HTTPInboundSG ]
+      UserData:
+        Fn::Base64: !Sub
+          - "#!/bin/bash -xe \n
+
+            cd /home/ec2-user \n
+            sudo yum install nodejs -y \n
+            wget --no-check-certificate https://github.com/michaelortiz05/Discord-Bot-Evolved/archive/master.tar.gz \n
+            tar -xvf master.tar.gz \n
+            cd Discord-Bot-Evolved-main/ \n
+            sudo yum install -y gcc-c++ make \n
+            sudo yum groupinstall -y \"Development Tools\" \n
+            sudo npm install @discordjs/opus \n
+            aws s3 cp s3://${EnvBucketName}/auth.txt . \n
+            aws s3 cp s3://${EnvBucketName}/config.json . \n
+            aws s3 cp s3://${EnvBucketName}/env ./.env \n
+            sudo npm install \n
+            cd .. \n
+            chown ec2-user Discord-Bot-Evolved-main \n
+            node Discord-Bot-Evolved-main/index.js
+            "
+
+          - EnvBucketName: !Ref EnvBucketName
+
+  SSHInboundSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: SSHInboundSG
+      GroupDescription: Allows inbound SSH access to instance
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+      VpcId: !Ref DefaultVPCID
+  HTTPInboundSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: WebTrafficInboundSG
+      GroupDescription: Allows inbound HTTP/S
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+        IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: 0.0.0.0/0       
+      SecurityGroupEgress:
+        IpProtocol: tcp
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 0.0.0.0/0
+      VpcId: !Ref DefaultVPCID
+  
+  DiscordBotInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [ !Ref EC2DiscordBotRole ]
+  EC2DiscordBotRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ec2-discordbot-role
+      AssumeRolePolicyDocument: {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": [ "ec2.amazonaws.com" ]
+                },
+                "Action": [ "sts:AssumeRole" ]
+            }
+        ]
+    }
+  EC2DiscordBotPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ec2-get-s3-env-policy
+      Roles: [ !Ref EC2DiscordBotRole ]
+      PolicyDocument: {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "GetObject",
+                "Effect": "Allow",
+                "Action": "s3:GetObject",
+                "Resource": !Join [ "", ["arn:aws:s3:::", !Ref EnvBucketName, "/*"] ]
+            }
+        ]
+    }
