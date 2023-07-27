@@ -1,4 +1,4 @@
-const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
+const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel } = require('@discordjs/voice');
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const playdl = require('play-dl');
 const EventEmitter = require('events');
@@ -113,16 +113,6 @@ class Player {
 			selfDeaf: false,
 		});
 		this.connection.subscribe(this.player);
-
-		// Bugfix for Linux autopausing
-		this.connection.on('stateChange', (oldState, newState) => {
-			if (
-				oldState.status === VoiceConnectionStatus.Ready &&
-                newState.status === VoiceConnectionStatus.Connecting
-			) {
-				this.connection.configureNetworking();
-			}
-		});
 	}
 	async playSong() {
 
@@ -189,7 +179,6 @@ class Player {
 			interaction.editReply('*Could Not Load Song*');
 			return;
 		}
-		console.log('stream returned');
 		const title = res[0].title;
 		const duration = this.setDuration(res[0].durationRaw);
 

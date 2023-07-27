@@ -13,38 +13,55 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       ALinuxArm: ami-002eb0cce502117b2
+      ALinux86: ami-08c84d37db8aafe00
     ap-northeast-2:
       ALinuxArm: ami-013e35012cb169cef
+      ALinux86: ami-0b7c737f668580ff1
     ap-northeast-3:
       ALinuxArm: ami-03b8bb56070c11374
+      ALinux86: ami-0df896ee24c051d42
     ap-south-1:
       ALinuxArm: ami-0f203c26f765cfb32
+      ALinux86: ami-0ded8326293d3201b
     ap-southeast-1:
       ALinuxArm: ami-0f064a4c9f3e6c504
+      ALinux86: ami-0a481e6d13af82399
     ap-southeast-2:
       ALinuxArm: ami-037cd799fbb0578cf
+      ALinux86: ami-00ffa321011c2611f
     ca-central-1:
       ALinuxArm: ami-0d955517b1485ed00
+      ALinux86: ami-0c63a96dc83836290
     eu-central-1:
       ALinuxArm: ami-0d03a2d1b22041c13
+      ALinux86: ami-0e00e602389e469a3
     eu-north-1:
       ALinuxArm: ami-03da1616c1fc9d795
+      ALinux86: ami-040d60c831d02d41c
     eu-west-1:
       ALinuxArm: ami-0fa60ab544ecd97e0
+      ALinux86: ami-05a3d90809a151346
     eu-west-2:
       ALinuxArm: ami-0cc7e32fa3b6695a5
+      ALinux86: ami-0b594cc165f9cddaa
     eu-west-3:
       ALinuxArm: ami-0e7dca26aea79122d
+      ALinux86: ami-0b8b5288592eca360
     sa-east-1:
       ALinuxArm: ami-0461cf0c292037658
+      ALinux86: ami-07fa9fd1e86f3fa29
     us-east-1:
       ALinuxArm: ami-0006abfd85caddf82
+      ALinux86: ami-0f34c5ae932e6f0e4
     us-east-2:
       ALinuxArm: ami-0e31d4ddf8c30fd2a
+      ALinux86: ami-02a89066c48741345
     us-west-1:
       ALinuxArm: ami-02df98ef10c8d0aa9
+      ALinux86: ami-0c38b9e37c107d921
     us-west-2:
       ALinuxArm: ami-00b8975bc3de669d2
+      ALinux86: ami-00970f57473724c10
 
 Resources:
   DiscordBotInstance:
@@ -53,7 +70,7 @@ Resources:
       Tags:
         - Key: Name
           Value: Odin Instance
-      ImageId: !FindInMap [ RegionMap, !Ref AWS::Region, ALinuxArm ]
+      ImageId: !FindInMap [ RegionMap, !Ref AWS::Region, ALinux86 ]
       InstanceType: t4g.small
       KeyName: !Ref KeyName
       IamInstanceProfile: !Ref DiscordBotInstanceProfile
@@ -76,7 +93,6 @@ Resources:
             sudo npm install \n
             cd .. \n
             chown ec2-user Discord-Bot-Evolved-main \n
-            node Discord-Bot-Evolved-main/index.js
             "
 
           - EnvBucketName: !Ref EnvBucketName
