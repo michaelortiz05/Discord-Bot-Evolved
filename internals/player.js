@@ -1,4 +1,4 @@
-const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel } = require('@discordjs/voice');
+const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const playdl = require('play-dl');
 const EventEmitter = require('events');
@@ -16,11 +16,13 @@ class Player {
 		this.songIndex = -1;
 		this.currentSong = null;
 		this.ttsFilePath = '';
-		this.loop = false;
 		this.duration = {
 			hours: 0,
 			minutes: 0,
 			seconds: 0,
+		};
+		this.settings = {
+			loop: false,
 		};
 
 		this.queueDisplayEmitter = new EventEmitter();
@@ -58,7 +60,7 @@ class Player {
 
 			sendMessage(this.textChannelId, `*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
 		}
-		else if (this.loop == true) {
+		else if (this.settings.loop == true) {
 			this.songIndex = -1;
 
 			this.playNextSong();
@@ -111,6 +113,16 @@ class Player {
 			selfDeaf: false,
 		});
 		this.connection.subscribe(this.player);
+
+		// Bugfix for Linux autopausing
+		this.connection.on('stateChange', (oldState, newState) => {
+			if (
+				oldState.status === VoiceConnectionStatus.Ready &&
+                newState.status === VoiceConnectionStatus.Connecting
+			) {
+				this.connection.configureNetworking();
+			}
+		});
 	}
 	async playSong() {
 
@@ -129,9 +141,9 @@ class Player {
 		this.ttsFilePath = tts_file_path;
 	}
 
-	addSong(interaction) {
+	async addSong(interaction) {
 		const source = interaction.options.getString('source');
-		interaction.deferReply();
+		await interaction.deferReply();
 
 		if (playdl.yt_validate(source) == 'search') {
 			this.loadSearch(interaction, source);
@@ -141,9 +153,10 @@ class Player {
 		}
 	}
 	async loadUrl(interaction, source) {
-		let info;
+
 
 		// playdl.video_basic_info thinks 11 char inputs w/o spaces are video IDs
+		let info;
 		try {
 			info = (await playdl.video_basic_info(source)).video_details;
 		}
@@ -151,35 +164,39 @@ class Player {
 			if (source.length == 11) { this.loadSearch(interaction, source); }
 			return;
 		}
+		let stream = playdl.stream(source);
 
 		const url = info.url;
 		const title = info.title;
 		const duration = this.setDuration(info.durationRaw);
 
+		if (this.subscribeToConnection(interaction) instanceof Error) { return; }
 		interaction.editReply(`*Added to Queue:*  ${title}`);
 
-		const stream = await playdl.stream(source);
-
-		this.subscribeToConnection(interaction);
+		stream = await stream;
 		this.pushSongToQueue(stream, title, url, duration);
+
 	}
 	async loadSearch(interaction, source) {
 		const res = await playdl.search(source, { source: { youtube : 'video' }, limit: 1 });
 		const url = res[0].url;
-		const title = res[0].title;
-		const duration = this.setDuration(res[0].durationRaw);
 
 		let stream;
 		try {
-			stream = await playdl.stream(url);
-			interaction.editReply(`*Added to Queue:*  **${title}**`);
+			stream = playdl.stream(url);
 		}
 		catch {
 			interaction.editReply('*Could Not Load Song*');
 			return;
 		}
+		console.log('stream returned');
+		const title = res[0].title;
+		const duration = this.setDuration(res[0].durationRaw);
 
-		this.subscribeToConnection(interaction);
+		if (this.subscribeToConnection(interaction) instanceof Error) { return; }
+		interaction.editReply(`*Added to Queue:*  **${title}**`);
+
+		stream = await stream;
 		this.pushSongToQueue(stream, title, url, duration);
 	}
 	pushSongToQueue(stream, title, url, duration) {
@@ -353,6 +370,11 @@ class Player {
 		else { secondString = this.duration.seconds.toString(); }
 
 		return `${hourString}:${minuteString}:${secondString}`;
+	}
+
+	changeSettings(setting, option) {
+		this.settings[setting] = option;
+		console.log(`${this.settings[setting]} changed to ${option}`);
 	}
 
 	isPlaying() {
