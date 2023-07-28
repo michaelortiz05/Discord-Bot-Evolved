@@ -1,4 +1,4 @@
-const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel, VoiceConnectionStatus, NoSubscriberBehavior } = require('@discordjs/voice');
+const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel } = require('@discordjs/voice');
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const playdl = require('play-dl');
 const EventEmitter = require('events');
@@ -124,7 +124,6 @@ class Player {
 			this.currentSong.audio = resource;
 		}
 		this.player.play(this.currentSong.audio);
-		console.log(this.currentSong.audio);
 	}
 
 	playTTS(tts_file_path) {
@@ -365,6 +364,10 @@ class Player {
 	changeSettings(setting, option) {
 		this.settings[setting] = option;
 		console.log(`${this.settings[setting]} changed to ${option}`);
+	}
+
+	returnCurrentSong() {
+		return this.currentSong;
 	}
 
 	isPlaying() {

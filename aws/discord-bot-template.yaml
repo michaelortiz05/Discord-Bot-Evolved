@@ -95,6 +95,7 @@ Resources:
             aws s3 cp s3://${EnvBucketName}/config.json . \n
             aws s3 cp s3://${EnvBucketName}/env ./.env \n
             sudo npm install \n
+            sudo mkdir tmp \n
             node index.js \n
             "
 
