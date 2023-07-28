@@ -1,4 +1,4 @@
-const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel, VoiceConnectionStatus } = require('@discordjs/voice');
+const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel, VoiceConnectionStatus, NoSubscriberBehavior } = require('@discordjs/voice');
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const playdl = require('play-dl');
 const EventEmitter = require('events');
@@ -114,15 +114,8 @@ class Player {
 		});
 		this.connection.subscribe(this.player);
 
-		this.connection.on('stateChange', (old_state, new_state) => {
-			console.log('Connection state change from', old_state.status, 'to', new_state.status);
-			if (old_state.status === VoiceConnectionStatus.Ready && new_state.status === VoiceConnectionStatus.Connecting) {
-				this.connection.configureNetworking();
-			}
-		});
 	}
 	async playSong() {
-
 
 		// remakes stream if it has been deleted
 		if (this.currentSong.audio == null) {
@@ -131,6 +124,7 @@ class Player {
 			this.currentSong.audio = resource;
 		}
 		this.player.play(this.currentSong.audio);
+		console.log(this.currentSong.audio);
 	}
 
 	playTTS(tts_file_path) {

@@ -4,9 +4,6 @@ const { Collection } = require('discord.js');
 const dotenv = require('dotenv');
 dotenv.config();
 const token = process.env.TOKEN;
-const config = require('./config.json');
-
-const { client, sendMessage } = require('./client');
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');

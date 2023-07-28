@@ -51,7 +51,7 @@ Mappings:
       ALinuxArm: ami-0461cf0c292037658
       ALinux86: ami-07fa9fd1e86f3fa29
     us-east-1:
-      ALinuxArm: ami-0006abfd85caddf82
+      ALinuxArm: ami-0964d1dc1edd4bd2f
       ALinux86: ami-0f34c5ae932e6f0e4
     us-east-2:
       ALinuxArm: ami-0e31d4ddf8c30fd2a
@@ -70,20 +70,24 @@ Resources:
       Tags:
         - Key: Name
           Value: Odin Instance
-      ImageId: !FindInMap [ RegionMap, !Ref AWS::Region, ALinux86 ]
-      InstanceType: t2.micro
+      ImageId: !FindInMap [ RegionMap, !Ref AWS::Region, ALinuxArm ]
+      InstanceType: t4g.small
       KeyName: !Ref KeyName
       IamInstanceProfile: !Ref DiscordBotInstanceProfile
       SecurityGroupIds: [ !Ref SSHInboundSG, !Ref HTTPInboundSG ]
       UserData:
         Fn::Base64: !Sub
-          - "#!/bin/bash -xe \n
+          - "#!/bin/bash -xe
 
+            exec >> /home/ec2-user/userdata.log 2>&1 \n
+
+            su ec2-user \n
             cd /home/ec2-user \n
-            sudo yum install nodejs -y \n
+            sudo yum install -y nodejs \n
             wget --no-check-certificate https://github.com/michaelortiz05/Discord-Bot-Evolved/archive/master.tar.gz \n
-            tar -xvf master.tar.gz \n
+            tar -xf master.tar.gz \n
             cd Discord-Bot-Evolved-main/ \n
+            sudo npm install -g node-gyp \n
             sudo yum install -y gcc-c++ make \n
             sudo yum groupinstall -y \"Development Tools\" \n
             sudo npm install @discordjs/opus \n
@@ -91,9 +95,7 @@ Resources:
             aws s3 cp s3://${EnvBucketName}/config.json . \n
             aws s3 cp s3://${EnvBucketName}/env ./.env \n
             sudo npm install \n
-            cd .. \n
-            chown ec2-user Discord-Bot-Evolved-main \n
-            node Discord-Bot-Evolved-main/index.js \n
+            node index.js \n
             "
 
           - EnvBucketName: !Ref EnvBucketName
@@ -130,8 +132,8 @@ Resources:
         ToPort: 443
         CidrIp: 0.0.0.0/0       
       SecurityGroupEgress:
-        IpProtocol: tcp
-        FromPort: 0
+        IpProtocol: udp
+        FromPort: 50000
         ToPort: 65535
         CidrIp: 0.0.0.0/0
       VpcId: !Ref DefaultVPCID
