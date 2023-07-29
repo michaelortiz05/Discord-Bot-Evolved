@@ -4,7 +4,7 @@ require('any-date-parser');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('book')
-		.setDescription('Book a Meeting')
+		.setDescription('NOT WORKING YET')
 		.addStringOption(option =>
 			option
 				.setName('name')

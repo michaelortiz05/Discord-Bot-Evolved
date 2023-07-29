@@ -9,38 +9,36 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 class ChatManager {
-    constructor(tuning) {
-        this.model = "gpt-3.5-turbo";
-        this.chats = new Map();
-        this.tuning = tuning;
-        this.maxLen = 2000;
-    }
-    async chat(userid, message) {
-        if (!this.chats.has(userid))
-            this.chats.set(userid, new ChatBuilder(userid, this.tuning.systems));
-        this.chats.get(userid).addMessage("user", message);
-        try {
-            let response = await openai.createChatCompletion({
-                model: this.model,
-                messages: this.chats.get(userid).messages
-            })
-            const response_message = response.data.choices[0].message
-            // let response_message = response["choices"][0]["message"]
-            this.chats.get(userid).addMessage(response_message.role, response_message.content);
-            console.log(this.chats.get(userid).messages);
-            if (response_message.content.length <= this.maxLen)
-                return response_message.content;
-            else
-                return response_message.content.slice(0, this.maxLen - 3) + '...';
+	constructor(tuning) {
+		this.model = 'gpt-3.5-turbo';
+		this.chats = new Map();
+		this.tuning = tuning;
+		this.maxLen = 2000;
+	}
+	async chat(userid, message) {
+		if (!this.chats.has(userid)) {this.chats.set(userid, new ChatBuilder(userid, this.tuning.systems));}
+		this.chats.get(userid).addMessage('user', message);
+		try {
+			const response = await openai.createChatCompletion({
+				model: this.model,
+				messages: this.chats.get(userid).messages,
+			});
+			const response_message = response.data.choices[0].message;
+			// let response_message = response["choices"][0]["message"]
+			this.chats.get(userid).addMessage(response_message.role, response_message.content);
+			console.log(this.chats.get(userid).messages);
+			if (response_message.content.length <= this.maxLen) {return response_message.content;}
+			else {return response_message.content.slice(0, this.maxLen - 3) + '...';}
 
-        } catch (e) {
-            console.log("Error: ", e);
-            return "Oh no! Something went wrong!"
-        }
-    }
-    clearChat(userid) {
-        return this.chats.delete(userid);
-    }
+		}
+		catch (e) {
+			console.log('Error: ', e);
+			return 'Oh no! Something went wrong!';
+		}
+	}
+	clearChat(userid) {
+		return this.chats.delete(userid);
+	}
 }
 
 class ChatBuilder {
@@ -87,26 +85,27 @@ class ChatBuilder {
 let tuning;
 try {
 	tuning = yaml.load(fs.readFileSync('./internals/tuning.yml', 'utf8'));
-} catch (e) {
+}
+catch (e) {
 	console.log(e);
 }
-let chatManager = new ChatManager(tuning);
+const chatManager = new ChatManager(tuning);
 
 // dalle generate function
 async function generate(properties) {
-    try {
-        const response = await openai.createImage(properties);
-        imageurl = response.data.data[0].url;
-        return imageurl;
-    } catch (error) {
-        if (error.response) {
-            console.log(error.response.status);
-            console.log(error.response.data);
-        } 
-        else 
-            console.log(error.message);
-    }
-    return;
+	try {
+		const response = await openai.createImage(properties);
+		const imageurl = response.data.data[0].url;
+		return imageurl;
+	}
+	catch (error) {
+		if (error.response) {
+			console.log(error.response.status);
+			console.log(error.response.data);
+		}
+		else {console.log(error.message);}
+	}
+	return;
 }
 
 module.exports = { chatManager, generate };

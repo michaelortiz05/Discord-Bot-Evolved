@@ -1,11 +1,10 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Collection } = require('discord.js');
+const { client } = require('./client.js');
 const dotenv = require('dotenv');
 dotenv.config();
 const token = process.env.TOKEN;
-
-const { client } = require('./client');
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
