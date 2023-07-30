@@ -108,4 +108,15 @@ async function generate(properties) {
 	return;
 }
 
-module.exports = { chatManager, generate };
+// openai timing 
+async function withTimeout(maxtime, asyncFn, context, ...args) {
+    let timeout = new Promise((_, reject) => {
+      let timer = setTimeout(() => {
+        clearTimeout(timer);
+        reject(new Error('Function execution timed out.'));
+      }, maxtime);
+    });
+    const boundAsyncFn = asyncFn.bind(context);
+    return await Promise.race([boundAsyncFn(...args), timeout]);
+}
+module.exports = { chatManager, generate, withTimeout };

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { chatManager } = require('../../internals/ai-manager');
+const { chatManager, withTimeout } = require('../../internals/ai-manager');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -13,8 +13,14 @@ module.exports = {
 	async execute(interaction) {
 		const userid = interaction.user.id;
 		const message = interaction.options.getString('message');
-		await interaction.reply(`"${message}"`);
-		const response = await chatManager.chat(userid, message);
-		await interaction.followUp(response);
+		await interaction.deferReply();
+		try {
+			let response = await withTimeout(15000, chatManager.chat, chatManager, userid, message);
+			await interaction.editReply(response);
+			console.log(response);
+		} catch (error) {
+			await interaction.editReply("Odin timed out!");
+			console.log(error);
+		}
 	},
 };

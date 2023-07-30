@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { generate } = require('../../internals/ai-manager');
+const { generate, withTimeout } = require('../../internals/ai-manager');
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('generate')
@@ -10,18 +10,24 @@ module.exports = {
 				.setDescription('image description')
 				.setRequired(true)),
 	async execute(interaction) {
-		await interaction.reply(`"${interaction.options.getString('prompt')}"\nworking on it...`);
-		const imageurl = await generate({
-			prompt: interaction.options.getString('prompt'),
-			n: 1,
-			size: '1024x1024',
-		});
-		if (imageurl != undefined) {
-			await interaction.followUp(
-				{ files: [
-					{ attachment: imageurl, name: 'dalle.png' },
-				] });
+		await interaction.deferReply();
+		try {
+			const image_config = {
+				prompt: interaction.options.getString('prompt'),
+				n: 1,
+				size: '1024x1024',
+			};
+			const imageurl = await withTimeout(30000, generate, null, image_config);
+			if (imageurl != undefined) {
+				await interaction.followUp(
+					{ files: [
+						{ attachment: imageurl, name: 'dalle.png' },
+					] });
+			}
+			else { await interaction.editReply('Error generating image!'); }
+		} catch (error) {
+			await interaction.editReply("Odin timed out!");
+			console.log(error);
 		}
-		else { await interaction.followUp('Something went wrong! Try again!'); }
 	},
 };
