@@ -1,6 +1,7 @@
 const yaml = require('js-yaml');
 const fs = require('fs');
 const { Configuration, OpenAIApi } = require('openai');
+const userIdMappings = require("../config.json").userIdMappings;
 
 const configuration = new Configuration({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -24,7 +25,6 @@ class ChatManager {
 				messages: this.chats.get(userid).messages,
 			});
 			const response_message = response.data.choices[0].message;
-			// let response_message = response["choices"][0]["message"]
 			this.chats.get(userid).addMessage(response_message.role, response_message.content);
 			console.log(this.chats.get(userid).messages);
 			if (response_message.content.length <= this.maxLen) {return response_message.content;}
@@ -48,33 +48,13 @@ class ChatBuilder {
 			this.addMessage('system', systems.base);
 			this.addMessage('system', systems.rp);
 			const sys = this.getSystemById(userid, systems);
-			console.log(sys);
 			if (sys != undefined) {this.addMessage('system', sys);}
 		}
 	}
 	getSystemById(userid, systems) {
-		let system;
-		switch (userid) {
-		case process.env.GOD_EMPEROR:
-			system = systems.godemperor;
-			break;
-		case process.env.MAX:
-			system = systems.max;
-			break;
-		case process.env.RHETT:
-			system = systems.rhett;
-			break;
-		case process.env.SEBA:
-			system = systems.seba;
-			break;
-		case process.env.HECTOR:
-			system = systems.hector;
-			break;
-		default:
-			break;
-		}
-		return system;
+        return userIdMappings[userid] ? systems[userIdMappings[userid]] : undefined;
 	}
+    
 	addMessage(role, content) {
 		this.messages.push({
 			'role': role,
