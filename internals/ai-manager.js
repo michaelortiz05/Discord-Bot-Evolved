@@ -42,43 +42,45 @@ class ChatManager {
 }
 
 class ChatBuilder {
-    constructor(userid, systems) {
-        this.messages = [];
-        if (systems != undefined) {
-            this.addMessage("system", systems.base);
-            this.addMessage("system", systems.rp);
-            let sys = this.getSystemById(userid, systems);
-            console.log(sys);
-            if (sys != undefined)
-                this.addMessage("system", sys);
-        }
-    }
-    getSystemById(userid, systems) {
-        let system;
-        switch(userid) {
-            case process.env.GOD_EMPEROR:
-                system = systems.godemperor;
-                break;
-            case process.env.MAX:
-                system = systems.max;
-                break;
-            case process.env.RHETT:
-                system = systems.rhett;
-            case process.env.SEBA:
-                system = systems.seba;
-            case process.env.HECTOR:
-                system = systems.hector;
-            default:
-                break;
-        }
-        return system;
-    }
-    addMessage(role, content) {
-        this.messages.push({
-            "role": role,
-            "content": content
-        })
-    }
+	constructor(userid, systems) {
+		this.messages = [];
+		if (systems != undefined) {
+			this.addMessage('system', systems.base);
+			this.addMessage('system', systems.rp);
+			const sys = this.getSystemById(userid, systems);
+			console.log(sys);
+			if (sys != undefined) {this.addMessage('system', sys);}
+		}
+	}
+	getSystemById(userid, systems) {
+		let system;
+		switch (userid) {
+		case process.env.GOD_EMPEROR:
+			system = systems.godemperor;
+			break;
+		case process.env.MAX:
+			system = systems.max;
+			break;
+		case process.env.RHETT:
+			system = systems.rhett;
+			break;
+		case process.env.SEBA:
+			system = systems.seba;
+			break;
+		case process.env.HECTOR:
+			system = systems.hector;
+			break;
+		default:
+			break;
+		}
+		return system;
+	}
+	addMessage(role, content) {
+		this.messages.push({
+			'role': role,
+			'content': content,
+		});
+	}
 }
 
 // gpt configuration
@@ -107,16 +109,4 @@ async function generate(properties) {
 	}
 	return;
 }
-
-// openai timing 
-async function withTimeout(maxtime, asyncFn, context, ...args) {
-    let timeout = new Promise((_, reject) => {
-      let timer = setTimeout(() => {
-        clearTimeout(timer);
-        reject(new Error('Function execution timed out.'));
-      }, maxtime);
-    });
-    const boundAsyncFn = asyncFn.bind(context);
-    return await Promise.race([boundAsyncFn(...args), timeout]);
-}
-module.exports = { chatManager, generate, withTimeout };
+module.exports = { chatManager, generate };

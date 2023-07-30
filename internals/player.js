@@ -133,17 +133,15 @@ class Player {
 
 	async addSong(interaction) {
 		const source = interaction.options.getString('source');
-		await interaction.deferReply();
 
 		if (playdl.yt_validate(source) == 'search') {
-			this.loadSearch(interaction, source);
+			return this.loadSearch(interaction, source);
 		}
 		else if (playdl.yt_validate(source) == 'video') {
-			this.loadUrl(interaction, source);
+			return this.loadUrl(interaction, source);
 		}
 	}
 	async loadUrl(interaction, source) {
-
 
 		// playdl.video_basic_info thinks 11 char inputs w/o spaces are video IDs
 		let info;
@@ -161,11 +159,10 @@ class Player {
 		const duration = this.setDuration(info.durationRaw);
 
 		if (this.subscribeToConnection(interaction) instanceof Error) { return; }
-		interaction.editReply(`*Added to Queue:*  ${title}`);
 
 		stream = await stream;
 		this.pushSongToQueue(stream, title, url, duration);
-
+		return title;
 	}
 	async loadSearch(interaction, source) {
 		const res = await playdl.search(source, { source: { youtube : 'video' }, limit: 1 });
@@ -183,10 +180,10 @@ class Player {
 		const duration = this.setDuration(res[0].durationRaw);
 
 		if (this.subscribeToConnection(interaction) instanceof Error) { return; }
-		interaction.editReply(`*Added to Queue:*  **${title}**`);
 
 		stream = await stream;
 		this.pushSongToQueue(stream, title, url, duration);
+		return title;
 	}
 	pushSongToQueue(stream, title, url, duration) {
 		const resource = createAudioResource(stream.stream, { inputType: stream.type });

@@ -1,5 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { generate, withTimeout } = require('../../internals/ai-manager');
+const { generate } = require('../../internals/ai-manager');
+const { withTimeout } = require('./../../internals/index');
+
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('generate')
@@ -25,8 +27,9 @@ module.exports = {
 					] });
 			}
 			else { await interaction.editReply('Error generating image!'); }
-		} catch (error) {
-			await interaction.editReply("Odin timed out!");
+		}
+		catch (error) {
+			await interaction.editReply('Odin timed out!');
 			console.log(error);
 		}
 	},
