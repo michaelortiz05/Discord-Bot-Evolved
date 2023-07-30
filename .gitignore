@@ -3,6 +3,7 @@ config.json
 .env
 .eslintrc.json*
 node_modules/
+.vscode/
 .DS_Store
 tmp/*
 
