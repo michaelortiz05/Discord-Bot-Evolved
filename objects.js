@@ -2,4 +2,7 @@
 const { Player } = require('./internals/player');
 const player = new Player();
 
-module.exports = { player };
+const { UserCurrencyTable } = require('./internals/market');
+const userCurrencyTable = new UserCurrencyTable;
+
+module.exports = { player, userCurrencyTable };
