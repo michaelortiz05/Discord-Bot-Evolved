@@ -1,7 +1,7 @@
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 
-const config = require('../config.json');
-const { getServerUsers } = require('./../client');
+const config = require('./config.json');
+const { getServerUsers } = require('./client');
 
 class UserCurrencyTable {
 	constructor() {

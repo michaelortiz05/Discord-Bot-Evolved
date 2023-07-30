@@ -1,6 +1,6 @@
 const { Events } = require('discord.js');
-const { sendMessage } = require('../client');
-const config = require('./../config.json');
+const { sendMessage } = require('../internals/client');
+const config = require('./../internals/config.json');
 
 module.exports = {
 	name: Events.ClientReady,
