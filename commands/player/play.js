@@ -15,7 +15,7 @@ module.exports = {
 	async execute(interaction) {
 		await interaction.deferReply();
 		try {
-			const response = await withTimeout(10, player.addSong, player, interaction);
+			const response = await withTimeout(10000, player.addSong, player, interaction);
 			if (response) { await interaction.editReply(`*Now Playing:* **${response}**`); }
 			else { interaction.editReply('*No song found*'); }
 		}
