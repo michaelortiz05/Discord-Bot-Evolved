@@ -2,6 +2,7 @@ const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 
 const { econUserTableName, econCurrencyTableName } = require('./config.json');
 const { getServerUsers } = require('./client');
+const { returnBalanceEmbed } = require('./display');
 const ddb = new DynamoDB({ apiVersion: '2012-08-10' });
 
 class EconUserInfo {
@@ -39,6 +40,8 @@ class EconUserInfo {
 				USERNAME: { S: username },
 				BALANCE: { N: balance.toString() },
 				INCOME: { N: allowance.toString() },
+				GPT_TOKENS: { N: '0' },
+				DALLE_TOKENS: { N: '0' },
 			},
 		};
 		ddb.putItem(params, (err) => {
@@ -70,7 +73,19 @@ class EconUserInfo {
 				console.log(`Could not update ${tokenString} of ${userId} by quantity ${tokenQuantity} || Error: ${err}`);
 			}
 			else {
-				console.log(`Updated ${tokenString} of ${userId} by quantity ${tokenQuantity}`);
+				console.log(`Updated ${tokenString} of ${userId} to quantity ${tokenQuantity}`);
+			}
+		});
+	}
+	updateBalance(userId, newBalance) {
+		const params = this.returnUpdateJson(userId, 'BALANCE', { 'N': newBalance });
+
+		ddb.updateItem(params, (err) => {
+			if (err) {
+				console.log(`Could not update balance of ${userId} to ${newBalance} || Error: ${err}`);
+			}
+			else {
+				console.log(`Updated balance of ${userId} to ${newBalance}`);
 			}
 		});
 	}
@@ -132,23 +147,6 @@ class EconUserInfo {
 				else { this.addUser(userId, username, 0, 100);}
 			}
 		}
-	}
-
-	async returnBalance(userId) {
-		const dbUser = await this.getDBUser(userId);
-
-		// error catch so we can add as many tokens as we'd like
-		let gptTokens, dalleTokens;
-		if (dbUser.GPT_TOKENS == undefined) { gptTokens = 0; }
-		else { gptTokens = dbUser.GPT_TOKENS.N; }
-		if (dalleTokens == undefined) { dalleTokens = 0; }
-		else { dalleTokens = dbUser.DALLE_TOKENS.N; }
-
-		return {
-			BALANCE: dbUser.BALANCE.N,
-			GPT_TOKENS: gptTokens,
-			DALLE_TOKENS: dalleTokens,
-		};
 	}
 
 	returnUpdateJson(userId, attribute, newValue) {
@@ -229,13 +227,39 @@ class EconCurrencyInfo {
 const econUserInfo = new EconUserInfo();
 const econCurrencyInfo = new EconCurrencyInfo();
 
-async function purchaseToken(userId) {// , tokenString, quantity) {
-	// let dbUser = econUserInfo.getDBUser(userId);
+async function purchaseToken(userId, tokenString, tokenQuantity) {
+	let dbUser = econUserInfo.getDBUser(userId);
 	const tokenInfo = await econCurrencyInfo.getTokenInfo();
 
-	console.log(tokenInfo);
+	for (const token of tokenInfo) {
+		if (token.TOKEN_ID.S == tokenString) {
+			const newShopQuantity = parseInt(token.QUANTITY.N) - tokenQuantity;
+			if (newShopQuantity < 0) { return `There are only ${token.QUANTITY.N} token(s) remaining!`; }
 
-	// dbUser = await dbUser;
+			dbUser = await dbUser;
 
+			const cost = parseInt(token.PRICE.N) * tokenQuantity;
+			const newUserBalance = parseInt(dbUser.BALANCE.N) - cost;
+			if (newUserBalance < 0) { return `This action would cost: ${cost} | Remaining balance: ${dbUser.BALANCE.N}`;}
+
+			const newUserQuantity = parseInt(dbUser[tokenString].N) + tokenQuantity;
+
+			// updates the DDB table
+			econCurrencyInfo.updateQuantity(token.TOKEN_ID.S, newShopQuantity.toString());
+			econUserInfo.updateBalance(userId, newUserBalance.toString());
+			econUserInfo.updateTokens(userId, tokenString, newUserQuantity.toString());
+
+			// updates the local user info for the embed display
+			dbUser.BALANCE.N = newUserBalance;
+			dbUser[tokenString].N = newUserQuantity;
+
+			const balanceEmbed = returnBalanceEmbed(dbUser);
+			return {
+				content: `*Purchased ${tokenQuantity} ${token.TOKEN_NAME.S}!*`,
+				embeds: [ balanceEmbed ] };
+		}
+	}
+	return new Error(`No Existent tokens of Name '${tokenString}'`);
 }
+
 module.exports = { econUserInfo, econCurrencyInfo, purchaseToken };
