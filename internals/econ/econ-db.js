@@ -28,6 +28,7 @@ class EconUserInfo {
 			};
 			ddb.getItem(params, (err, data) => {
 				if (err) { return rej(err); }
+				else if (!data.Item) { return rej(`No User with ID: ${userId}`); }
 				else { return res(data.Item); }
 			});
 		});
