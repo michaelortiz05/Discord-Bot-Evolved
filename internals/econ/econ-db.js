@@ -1,8 +1,8 @@
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 
-const { econUserTableName, econCurrencyTableName } = require('./config.json');
-const { getServerUsers } = require('./client');
-const { returnBalanceEmbed } = require('./display');
+const { econUserTableName, econCurrencyTableName } = require('../config.json');
+const { getServerUsers } = require('../client');
+const { returnBalanceEmbed } = require('../display');
 const ddb = new DynamoDB({ apiVersion: '2012-08-10' });
 
 class EconUserInfo {

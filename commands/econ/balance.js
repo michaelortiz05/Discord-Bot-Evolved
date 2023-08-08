@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { econUserInfo } = require('./../../internals/econ');
+const { econUserInfo } = require('../../internals/econ/econ-db');
 const { returnBalanceEmbed } = require('../../internals/display');
 
 module.exports = {
