@@ -46,39 +46,49 @@ class PaymentWebhookEndpoint {
 		});
 	}
 
-	processPayment(webhookBody) {
+	async processPayment(webhookBody) {
 		const payment = webhookBody.data.object;
 
 		const name = payment.customer_details.name;
 		const userId = payment.custom_fields[0].numeric.value;
-		const email = payment.customer_details.email;
+		// const email = payment.customer_details.email;
 		const amount = payment.amount_total;
 
-
 		console.log(`Received payment from ${name} for amount ${amount} || User ID: ${userId}`);
+
+		// TODO add error handling; don't want people's money to go into the void
+		let dbUser;
+		try {
+			dbUser = await econUserInfo.getDBUser(userId);
+		}
+		catch (err) {
+			console.log(err);
+			return;
+		}
+
+		const newBalance = parseInt(dbUser.BALANCE.N) + amount;
+
+		// TODO add idempotency with id check or rate limit
+		econUserInfo.updateBalance(userId, newBalance.toString());
 	}
 }
 
 
-class PaymentInfo {
+// class PaymentInfo {
 
-	async returnInvoices() {
-		const invoices = await stripe.invoices.list();
-		console.log(invoices);
-	}
-	async returnInvoice(invoiceId) {
-		const invoice = await stripe.invoices.retrieve(invoiceId);
-		console.log(invoice);
-	}
+// 	async returnInvoices() {
+// 		const invoices = await stripe.invoices.list();
+// 		console.log(invoices);
+// 	}
+// 	async returnInvoice(invoiceId) {
+// 		const invoice = await stripe.invoices.retrieve(invoiceId);
+// 		console.log(invoice);
+// 	}
 
-	async getPayment(paymentId) {
-		const payment = await stripe.paymentIntents.retrieve(paymentId);
-		console.log(payment);
-	}
-}
+// 	async getPayment(paymentId) {
+// 		const payment = await stripe.paymentIntents.retrieve(paymentId);
+// 		console.log(payment);
+// 	}
+// }
 
-// const paymentInfo = new PaymentInfo();
-// paymentInfo.getPayment('pi_3Nct8tH1qKKZjOVL0owF0JC1');
-
-const endpoint = new PaymentWebhookEndpoint();
-
+module.exports = { PaymentWebhookEndpoint };
