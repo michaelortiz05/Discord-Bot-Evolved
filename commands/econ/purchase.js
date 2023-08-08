@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { purchaseToken } = require('./../../internals/econ');
+const { purchaseToken } = require('../../internals/econ/econ-db');
 
 module.exports = {
 	data: new SlashCommandBuilder()

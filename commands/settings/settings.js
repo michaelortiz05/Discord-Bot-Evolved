@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { player } = require('../../objects');
-const { econUserInfo } = require('../../internals/econ');
+const { econUserInfo } = require('../../internals/econ/econ-db');
 
 module.exports = {
 	data: new SlashCommandBuilder()
