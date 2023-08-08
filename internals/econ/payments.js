@@ -54,9 +54,6 @@ class PaymentWebhookEndpoint {
 		const email = payment.customer_details.email;
 		const amount = payment.amount_total;
 
-        dbUser = await econUserInfo.getDBUser(userId);
-        econUserInfo.updateBalance
-
 
 		console.log(`Received payment from ${name} for amount ${amount} || User ID: ${userId}`);
 	}
