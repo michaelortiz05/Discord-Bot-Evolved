@@ -228,6 +228,7 @@ class Player {
 		this.queueDisplayEmitter.emit('queueDisplay');
 		this.queueDisplayEmitter.once('queueDisplay', () => {
 			console.log('queueDisplay');
+			// TODO catch error if queue message was manually deleted
 			this.deleteQueueMessages(queueMessages);
 			interaction.deleteReply();
 		});
