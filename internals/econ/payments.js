@@ -27,15 +27,18 @@ class PaymentWebhookEndpoint {
 			// this is just req.body with express.json enabled
 			const body = JSON.parse(req.body.toString());
 
-			try {
-				this.processPayment(body);
 
-				res.status(200).send('OK');
-			}
-			catch (err) {
-				console.log(`Webhook Error: ${err}`);
-				res.status(400).send(`Webhook Error: ${err}`);
-			}
+			this.processPayment(body).then(
+				(status) => {
+					res.status(200).send(status);
+				},
+				(rejStatus) => {
+
+					// TODO invalidate payment if there is an error
+					console.log(`Webhook Error: ${rejStatus}`);
+					res.status(400).send(`Webhook Error: ${rejStatus}`);
+				},
+			);
 
 
 		});
@@ -46,30 +49,28 @@ class PaymentWebhookEndpoint {
 		});
 	}
 
-	async processPayment(webhookBody) {
-		const payment = webhookBody.data.object;
+	processPayment(webhookBody) {
+		return new Promise((res, rej) => {
+			const payment = webhookBody.data.object;
 
-		const name = payment.customer_details.name;
-		const userId = payment.custom_fields[0].numeric.value;
-		// const email = payment.customer_details.email;
-		const amount = payment.amount_total;
+			const name = payment.customer_details.name;
+			const userId = payment.custom_fields[0].numeric.value;
+			// const email = payment.customer_details.email;
+			const amount = payment.amount_total;
 
-		console.log(`Received payment from ${name} for amount ${amount} || User ID: ${userId}`);
+			console.log(`Received payment from ${name} for amount ${amount} || User ID: ${userId}`);
 
-		// TODO add error handling; don't want people's money to go into the void
-		let dbUser;
-		try {
-			dbUser = await econUserInfo.getDBUser(userId);
-		}
-		catch (err) {
-			console.log(err);
-			return;
-		}
+			econUserInfo.getDBUser(userId).then(
+				(dbUser) => {
+					const newBalance = parseInt((parseInt(dbUser.BALANCE.N) + amount) * 0.95);
 
-		const newBalance = parseInt(dbUser.BALANCE.N) + amount;
-
-		// TODO add idempotency with id check or rate limit
-		econUserInfo.updateBalance(userId, newBalance.toString());
+					// TODO add idempotency with id check or rate limit
+					econUserInfo.updateBalance(userId, newBalance.toString());
+					return res('OK');
+				},
+				() => { return rej('No existing user in database!'); },
+			);
+		});
 	}
 }
 
