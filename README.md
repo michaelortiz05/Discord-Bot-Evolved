@@ -1,7 +1,7 @@
 # Discord-Bot-Evolved
 ## Overview
 This is a Discord bot that we are adding to our server.
-![Underlying Infrastructure](https://raw.githubusercontent.com/michaelortiz05/Discord-Bot-Evolved/tree/market/images/Infrastructure.svg)
+![Underlying Infrastructure](https://raw.githubusercontent.com/michaelortiz05/Discord-Bot-Evolved/market/images/Infrastructure.png)
 
 ## Commands
 ### Booking
