@@ -63,5 +63,5 @@ As the bot evolves, we need a way to deploy the server with minimal overhead. Cu
 
 To fully deploy the bot, create an S3 bucket with a *.env* and *config.json* (information on contents of these files coming soon). Next, log into your AWS CLI profile from your computer, navigate to the `Discord-Bot-Evolved` folder and use the command:
 
-```aws cloudformation create-stack --stack-name <STACK_NAME>--template-body file://aws/discord-bot-template.yaml --parameters ParameterKey=EnvBucketName,ParameterValue=<NAME_OF_CONFIG_BUCKET> ParameterKey=DefaultVPCID,ParameterValue=<DEFAULT_VPC_ID> ParameterKey=KeyName,ParameterValue=<EC2_KEY> --capabilities CAPABILITY_NAMED_IAM```
+```aws cloudformation create-stack --stack-name <STACK_NAME> --template-body file://aws/discord-bot-template.yaml --parameters ParameterKey=EnvBucketName,ParameterValue=<NAME_OF_CONFIG_BUCKET> ParameterKey=DefaultVPCID,ParameterValue=<DEFAULT_VPC_ID> ParameterKey=KeyName,ParameterValue=<EC2_KEY> --capabilities CAPABILITY_NAMED_IAM```
 
