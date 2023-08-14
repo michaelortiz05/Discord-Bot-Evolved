@@ -2,9 +2,9 @@ const Stripe = require('stripe');
 const { econUserInfo } = require('./econ-db');
 
 // TODO get this variable from .env; does not work on windows!
-const config = require('../config.json');
-const key = config.STRIPE_SECRET_KEY;
-const stripe = Stripe(key);
+const dotenv = require('dotenv');
+dotenv.config();
+const stripe = Stripe(process.STRIPE_SECRET_KEY);
 
 
 class PaymentWebhookEndpoint {
@@ -15,7 +15,7 @@ class PaymentWebhookEndpoint {
 		app.post('/payments', express.raw({ type: 'application/json' }), (req, res) => {
 
 			// webhook signature testing
-			const endpointSecret = config.STRIPE_ENDPOINT_SECRET;
+			const endpointSecret = process.STRIPE_ENDPOINT_SECRET;
 			const signature = req.headers['stripe-signature'];
 			try { stripe.webhooks.constructEvent(req.body, signature, endpointSecret); }
 			catch (err) {
