@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { player } = require('../../objects');
-const { userCurrencyTable } = require('../../objects');
+const { econUserInfo } = require('../../internals/econ/econ-db');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -42,10 +42,10 @@ module.exports = {
 		}
 		else if (interaction.options.getSubcommandGroup() == 'market') {
 			if (interaction.options.getSubcommand() == 'update') {
-				userCurrencyTable.updateUsers();
+				econUserInfo.updateUsers();
 			}
 			else if (interaction.options.getSubcommand() == 'paycheck') {
-				userCurrencyTable.addAllIncomes();
+				econUserInfo.addAllIncomes();
 			}
 		}
 	},

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { destroy } = require('../../client');
+const { destroy } = require('../../internals/client');
 
 module.exports = {
 	data: new SlashCommandBuilder()

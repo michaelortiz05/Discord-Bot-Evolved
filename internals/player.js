@@ -3,7 +3,7 @@ const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const playdl = require('play-dl');
 const EventEmitter = require('events');
 
-const { sendMessage } = require('./../client');
+const { sendMessage } = require('./client');
 const { buttonEmitter } = require('./../events/interactionCreate');
 const { unlink } = require('fs');
 
@@ -228,6 +228,7 @@ class Player {
 		this.queueDisplayEmitter.emit('queueDisplay');
 		this.queueDisplayEmitter.once('queueDisplay', () => {
 			console.log('queueDisplay');
+			// TODO catch error if queue message was manually deleted
 			this.deleteQueueMessages(queueMessages);
 			interaction.deleteReply();
 		});
