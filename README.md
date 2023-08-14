@@ -26,11 +26,11 @@ The underlying system uses Stripe as the payment processor. A webhook is sent to
 `/purchase` allows users to purchase API tokens with currency. Uses options **amount** to specify quantity **currency** to specify type.
 
 ### OpenAI
-`/chat`
+`/chat` starts or continues an interaction with GPT using the OpenAI "Chat Completions" endpoint. Responses can be tuned with *tuning.yaml*.
 
-`/clearchat`
+`/clearchat` clears the current GPT interaction of all previous chats.
 
-`/generate`
+`/generate` uses the dallE AI model to generate an image, then uploads it to the discord server.
 
 ### Audio Player
 The audio player plays YouTube videos by entering the current voice channel of the user. Members of the server can add or delete songs from the queue, which will automatically play one after the other.
