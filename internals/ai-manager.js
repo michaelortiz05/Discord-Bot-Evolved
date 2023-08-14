@@ -1,7 +1,7 @@
 const yaml = require('js-yaml');
 const fs = require('fs');
 const { Configuration, OpenAIApi } = require('openai');
-const userIdMappings = require("../config.json").userIdMappings;
+const userIdMappings = require('../config.json').userIdMappings;
 
 const configuration = new Configuration({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -54,7 +54,7 @@ class ChatBuilder {
 	getSystemById(userid, systems) {
         return userIdMappings[userid] ? systems[userIdMappings[userid]] : undefined;
 	}
-    
+
 	addMessage(role, content) {
 		this.messages.push({
 			'role': role,

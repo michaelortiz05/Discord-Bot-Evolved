@@ -1,7 +1,6 @@
 const Stripe = require('stripe');
 const { econUserInfo } = require('./econ-db');
 
-// TODO get this variable from .env; does not work on windows!
 const dotenv = require('dotenv');
 dotenv.config();
 const stripe = Stripe(process.STRIPE_SECRET_KEY);
