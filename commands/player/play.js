@@ -1,5 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { player } = require('../../objects');
+const { connection } = require('../../internals/player/connection');
+const { player } = require('../../internals/player/player');
+
 const { withTimeout } = require('./../../internals/index');
 
 module.exports = {
@@ -14,15 +16,27 @@ module.exports = {
 
 	async execute(interaction) {
 		await interaction.deferReply();
-		try {
-			const response = await withTimeout(10000, player.addSong, player, interaction);
-			if (response) { await interaction.editReply(`*Now Playing:* **${response}**`); }
-			else { interaction.editReply('*No song found*'); }
+        try {
+			connection.loadInteraction(interaction);
+
+            try {
+                const source = interaction.options.getString('source');
+                console.log(`Command: /play ${source}`);
+
+                const response = await withTimeout(10000, player.addSong, player, source);
+                if (response) { await interaction.editReply(`*Added to Queue:* **${response}**`); }
+                else { interaction.editReply('*No song found*'); }
+            }
+            catch (error) {
+                await interaction.editReply('Odin timed out!');
+                console.log(error);
+            }
 		}
 		catch (error) {
-			await interaction.editReply('Odin timed out!');
+			interaction.editReply('User must be in voice channel!');
 			console.log(error);
 		}
+
 	},
 };
 

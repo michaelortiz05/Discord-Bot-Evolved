@@ -1,17 +1,14 @@
-const { createAudioPlayer, createAudioResource, AudioPlayerStatus, joinVoiceChannel } = require('@discordjs/voice');
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { createAudioPlayer, createAudioResource, AudioPlayerStatus} = require('@discordjs/voice');
 const playdl = require('play-dl');
-const EventEmitter = require('events');
-
-const { sendMessage } = require('./client');
-const { buttonEmitter } = require('./../events/interactionCreate');
 const { unlink } = require('fs');
+
+const { connection } = require('./connection');
+const { queueDisplay } = require('../display');
 
 class Player {
 	constructor() {
 		this.player = createAudioPlayer();
 		this.queue = [];
-		this.connection = null;
 
 		this.songIndex = -1;
 		this.currentSong = null;
@@ -24,8 +21,6 @@ class Player {
 		this.settings = {
 			loop: false,
 		};
-
-		this.queueDisplayEmitter = new EventEmitter();
 
 		this.player.on('error', (error) => {
 			console.error('Error:', error.message);
@@ -58,7 +53,7 @@ class Player {
 			this.currentSong = this.queue[this.songIndex];
 			this.playSong();
 
-			sendMessage(this.textChannelId, `*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
+			connection.sendMessage(`*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
 		}
 		else if (this.settings.loop == true) {
 			this.songIndex = -1;
@@ -72,6 +67,13 @@ class Player {
 		}
 	}
 
+    playDifferentSong(songIndex) {
+        this.currentSong.audio = null;
+        this.currentSong = this.queue[songIndex];
+        this.songIndex = songIndex
+        this.playSong();
+    }
+
 	endOfQueueEvent() {
 		if (this.ttsFilePath) {
 			unlink(this.ttsFilePath, (err) => {
@@ -83,37 +85,11 @@ class Player {
 			this.ttsFilePath = '';
 		}
 
-		if (this.connection) {
-			this.connection.destroy();
-			this.connection = null;
-		}
+        connection.sendMessage('*Queue Has Ended — No More Songs in Queue');
+        connection.unsubscribe()
 
-		this.queueDisplayEmitter.removeAllListeners();
-
-		sendMessage(this.textChannelId, '*Queue Has Ended — No More Songs in Queue');
-	}
-
-	// ADD SONG LOGIC /play
-	subscribeToConnection(interaction) {
-		if (this.connection) {
-			return;
-		}
-		if (interaction.member.voice.channel == null) {
-			// TODO this currently errors out
-			interaction.editReply('User must be in voice channel!');
-			return new Error('noConnection');
-		}
-
-		this.textChannelId = interaction.channel.id;
-
-		this.connection = joinVoiceChannel({
-			channelId: interaction.member.voice.channel.id,
-			guildId: interaction.channel.guild.id,
-			adapterCreator: interaction.channel.guild.voiceAdapterCreator,
-			selfDeaf: false,
-		});
-		this.connection.subscribe(this.player);
-
+		const queueDisplayEmitter = queueDisplay.returnEmitter();
+        queueDisplayEmitter.emit('queueDisplay');
 	}
 	async playSong() {
 
@@ -131,17 +107,16 @@ class Player {
 		this.ttsFilePath = tts_file_path;
 	}
 
-	async addSong(interaction) {
-		const source = interaction.options.getString('source');
+	async addSong(source) {
 
 		if (playdl.yt_validate(source) == 'search') {
-			return this.loadSearch(interaction, source);
+			return this.loadSearch(source);
 		}
 		else if (playdl.yt_validate(source) == 'video') {
-			return this.loadUrl(interaction, source);
+			return this.loadUrl(source);
 		}
 	}
-	async loadUrl(interaction, source) {
+	async loadUrl(source) {
 
 		// playdl.video_basic_info thinks 11 char inputs w/o spaces are video IDs
 		let info;
@@ -149,7 +124,7 @@ class Player {
 			info = (await playdl.video_basic_info(source)).video_details;
 		}
 		catch {
-			if (source.length == 11) { this.loadSearch(interaction, source); }
+			if (source.length == 11) { this.loadSearch(source); }
 			return;
 		}
 		let stream = playdl.stream(source);
@@ -158,13 +133,13 @@ class Player {
 		const title = info.title;
 		const duration = this.setDuration(info.durationRaw);
 
-		if (this.subscribeToConnection(interaction) instanceof Error) { return; }
+		if (connection.subscribe(this.player) instanceof Error) { return; }
 
 		stream = await stream;
 		this.pushSongToQueue(stream, title, url, duration);
 		return title;
 	}
-	async loadSearch(interaction, source) {
+	async loadSearch(source) {
 		const res = await playdl.search(source, { source: { youtube : 'video' }, limit: 1 });
 		const url = res[0].url;
 
@@ -173,13 +148,13 @@ class Player {
 			stream = playdl.stream(url);
 		}
 		catch {
-			interaction.editReply('*Could Not Load Song*');
+            console.log('Could not load song!')
 			return;
 		}
 		const title = res[0].title;
 		const duration = this.setDuration(res[0].durationRaw);
 
-		if (this.subscribeToConnection(interaction) instanceof Error) { return; }
+		if (connection.subscribe(this.player) instanceof Error) { return; }
 
 		stream = await stream;
 		this.pushSongToQueue(stream, title, url, duration);
@@ -199,6 +174,9 @@ class Player {
 	}
 
 	deleteSong(songIndex) {
+        this.removeDuration(this.queue[songIndex].duration);
+        const songTitle = this.queue[songIndex].title;
+
 		if (songIndex == this.songIndex) {
 			this.playNextSong();
 		}
@@ -206,106 +184,9 @@ class Player {
 			this.currentSong.audio = null;
 			this.songIndex -= 1;
 		}
-		this.removeDuration(this.queue[songIndex].duration);
-		console.log('Audio player deleted song: ' + this.queue[songIndex].title);
+
+		console.log(`Audio player deleted song: ${songTitle}`);
 		this.queue.splice(songIndex, 1);
-	}
-
-	// QUEUE RENDERING LOGIC /queue
-	// TODO remove previous queue message if new one is rendered
-	//             eventlistener or store the data in this.options
-	displayQueue(interaction) {
-		const currentSong = this.currentSong;
-
-		if (currentSong == null) {
-			interaction.reply('*Queue is Empty*');
-			return;
-		}
-
-		const queueMessages = [];
-		this.renderQueueMessages(interaction, queueMessages);
-
-		this.queueDisplayEmitter.emit('queueDisplay');
-		this.queueDisplayEmitter.once('queueDisplay', () => {
-			console.log('queueDisplay');
-			// TODO catch error if queue message was manually deleted
-			this.deleteQueueMessages(queueMessages);
-			interaction.deleteReply();
-		});
-
-		buttonEmitter.removeAllListeners('songDel');
-		buttonEmitter.removeAllListeners('songName');
-
-		this.addButtonEmitters(interaction, queueMessages);
-	}
-	addButtonEmitters(interaction, queueMessages) {
-		buttonEmitter.on('songDel', (songIndex) => {
-			buttonEmitter.removeAllListeners('songDel');
-			buttonEmitter.removeAllListeners('songName');
-			this.queueDisplayEmitter.removeAllListeners('queueDisplay');
-
-			this.deleteSong(songIndex);
-			this.deleteQueueMessages(queueMessages);
-			interaction.editReply(`*Removed from Queue: *  **${this.queue[songIndex].title}**`);
-		});
-
-		buttonEmitter.on('songName', (songIndex) => {
-			buttonEmitter.removeAllListeners('songDel');
-			buttonEmitter.removeAllListeners('songName');
-			this.queueDisplayEmitter.removeAllListeners('queueDisplay');
-
-			if (this.isPlaying()) { this.currentSong.audio = null; }
-			this.currentSong = this.queue[songIndex];
-			this.songIndex = songIndex;
-			this.playSong();
-
-			this.deleteQueueMessages(queueMessages);
-			interaction.editReply('*Changed Current Song*');
-
-			sendMessage(this.textChannelId, `*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
-		});
-	}
-	async renderQueueMessages(interaction, queueMessages) {
-
-		interaction.reply(`**Song Queue**  |  *Songs: ${this.queue.length}*  |  *Duration: ${this.displayDuration()}*`);
-
-		const textChannelId = interaction.channel.id;
-
-		// TODO only render updates
-		const delSongButtons = [];
-		const songButtons = [];
-
-		for (let i = 0; i < this.queue.length; i++) {
-			delSongButtons.push(new ButtonBuilder()
-				.setCustomId('songDel_' + (i).toString())
-				.setLabel('❌')
-				.setStyle(ButtonStyle.Secondary));
-			songButtons.push(new ButtonBuilder()
-				.setCustomId('songName_' + (i).toString())
-				.setLabel(this.queue[i].title));
-			if (i == this.songIndex) {
-				songButtons[i].setStyle(ButtonStyle.Success);
-			}
-			else {
-				songButtons[i].setStyle(ButtonStyle.Primary);
-			}
-		}
-		let i = 0;
-		let actionRowArr = [];
-		while (i < this.queue.length) {
-			actionRowArr.push(new ActionRowBuilder().addComponents(delSongButtons[i], songButtons[i]));
-			i += 1;
-			if (i % 5 == 0 || i == this.queue.length) {
-				queueMessages.push(await sendMessage(textChannelId, { components: actionRowArr }));
-				actionRowArr = [];
-			}
-		}
-	}
-	deleteQueueMessages(queueMessages) {
-		for (const message of queueMessages) {
-			message.delete();
-		}
-		queueMessages = [];
 	}
 
 	setDuration(durationRaw) {
@@ -367,6 +248,12 @@ class Player {
 	returnCurrentSong() {
 		return this.currentSong;
 	}
+    returnQueue() {
+        return this.queue;
+    }
+    returnSongIndex() {
+        return this.songIndex;
+    }
 
 	isPlaying() {
 		if (this.songIndex == -1) { return false; }
@@ -374,4 +261,5 @@ class Player {
 	}
 }
 
-module.exports = { Player };
+const player = new Player();
+module.exports = { player };

@@ -5,7 +5,4 @@ function Initialize() {
 	new PaymentWebhookEndpoint();
 }
 
-const { Player } = require('./internals/player');
-const player = new Player();
-
-module.exports = { player, Initialize };
+module.exports = { Initialize };
