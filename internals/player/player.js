@@ -109,6 +109,7 @@ class Player {
 
 	async addSong(source) {
 
+        // TODO add catch if songs can't be loaded i.e. age restricted videos
 		if (playdl.yt_validate(source) == 'search') {
 			return this.loadSearch(source);
 		}
@@ -135,7 +136,11 @@ class Player {
 
 		if (connection.subscribe(this.player) instanceof Error) { return; }
 
-		stream = await stream;
+        try { stream = await stream; }
+        catch(err) { 
+            console.log(`Error Loading Song: ${err}`)
+            return; 
+        }
 		this.pushSongToQueue(stream, title, url, duration);
 		return title;
 	}
@@ -156,7 +161,11 @@ class Player {
 
 		if (connection.subscribe(this.player) instanceof Error) { return; }
 
-		stream = await stream;
+        try { stream = await stream; }
+        catch(err) { 
+            console.log(`Error Loading Song: ${err}`)
+            return; 
+        }
 		this.pushSongToQueue(stream, title, url, duration);
 		return title;
 	}

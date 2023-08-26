@@ -15,14 +15,16 @@ module.exports = {
 				.setRequired(true)),
 
 	async execute(interaction) {
-		await interaction.deferReply();
+        try { await interaction.deferReply(); } 
+        catch { }
+        
         try {
 			connection.loadInteraction(interaction);
 
-            try {
-                const source = interaction.options.getString('source');
-                console.log(`Command: /play ${source}`);
+            const source = interaction.options.getString('source');
+            console.log(`Command: /play ${source}`);
 
+            try {
                 const response = await withTimeout(10000, player.addSong, player, source);
                 if (response) { await interaction.editReply(`*Added to Queue:* **${response}**`); }
                 else { interaction.editReply('*No song found*'); }
@@ -37,6 +39,6 @@ module.exports = {
 			console.log(error);
 		}
 
-	},
+	}
 };
 

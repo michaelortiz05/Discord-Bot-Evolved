@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { player } = require('../../internals/player/player');
+const { reply } = require('../../internals');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -10,11 +11,14 @@ module.exports = {
 		if (player.isPlaying()) {
 			const currentSong = player.returnCurrentSong();
 			player.playNextSong();
-			interaction.reply(`*Skipping Song —* **${currentSong.title}**`);
+
+            try {
+                interaction.reply(`*Skipping Song —* **${currentSong.title}**`);
+            }
+            catch { }
 		}
 		else {
-			interaction.reply('*No Songs in Queue!*');
+            interaction.reply('*No Songs in Queue!*');
 		}
 	},
 };
-

@@ -4,6 +4,7 @@ const { player } = require('../../internals/player/player');
 const { buttonEmitter } = require('./../../events/interactionCreate');
 const { sendMessage } = require('../../internals/client');
 const { text } = require('body-parser');
+const { reply } = require('../../internals');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -29,6 +30,7 @@ module.exports = {
         for (let actionRow of actionRowList) {
             queueMessages.push(await sendMessage(textChannelId, { components: actionRow }));
         }
+        console.log(queueMessages);
         
         const queueDisplayEmitter = queueDisplay.returnEmitter();
         queueDisplayEmitter.emit('queueDisplay');
@@ -37,7 +39,6 @@ module.exports = {
                 removeFromDiscord(queueMessages);
                 interaction.deleteReply();
             }
-            // if this function catches, the reply was already deleted
             catch { }
         });
 
