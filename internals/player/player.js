@@ -18,6 +18,7 @@ class Player {
 			minutes: 0,
 			seconds: 0,
 		};
+        this.endStatus = 'No More Songs in Queue';
 		this.settings = {
 			loop: false,
 		};
@@ -61,9 +62,9 @@ class Player {
 			this.playNextSong();
 		}
 		else {
-			this.player.stop();
-			this.songIndex = -1;
-			this.queue = [];
+            this.player.stop();
+            this.songIndex = -1;
+            this.queue = [];
 		}
 	}
 
@@ -72,6 +73,15 @@ class Player {
         this.currentSong = this.queue[songIndex];
         this.songIndex = songIndex
         this.playSong();
+    }
+
+    endQueue() {
+        this.settings.loop = false;
+        this.player.stop();
+        this.songIndex = -1;
+        this.queue = [];
+
+        this.endStatus = 'Queue Manually Ended'
     }
 
 	endOfQueueEvent() {
@@ -85,11 +95,13 @@ class Player {
 			this.ttsFilePath = '';
 		}
 
-        connection.sendMessage('*Queue Has Ended — No More Songs in Queue');
+        connection.sendMessage('**Queue Has Ended** — ' + this.endStatus);
         connection.unsubscribe()
+        this.endStatus = 'No More Songs in Queue';
 
 		const queueDisplayEmitter = queueDisplay.returnEmitter();
         queueDisplayEmitter.emit('queueDisplay');
+        
 	}
 	async playSong() {
 
@@ -250,6 +262,8 @@ class Player {
 	}
 
 	changeSettings(setting, option) {
+        console.log(this.settings[setting]);
+        console.log(option);
 		this.settings[setting] = option;
 		console.log(`${this.settings[setting]} changed to ${option}`);
 	}

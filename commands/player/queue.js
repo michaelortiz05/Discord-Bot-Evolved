@@ -3,8 +3,6 @@ const { queueDisplay } = require('../../internals/display');
 const { player } = require('../../internals/player/player');
 const { buttonEmitter } = require('./../../events/interactionCreate');
 const { sendMessage } = require('../../internals/client');
-const { text } = require('body-parser');
-const { reply } = require('../../internals');
 
 module.exports = {
 	data: new SlashCommandBuilder()
