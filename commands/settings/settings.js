@@ -14,22 +14,22 @@ module.exports = {
 					option.setName('loop')
 						.setDescription('Whether the player loops back upon reaching the end of the Queue'),
 				),
-		)
-		.addSubcommandGroup(subcommandGroup =>
-			subcommandGroup
-				.setName('market')
-				.setDescription('Market Options')
-				.addSubcommand(subcommand =>
-					subcommand
-						.setName('update')
-						.setDescription('Adds users to the market if they are not there already'),
-				)
-				.addSubcommand(subcommand =>
-					subcommand
-						.setName('paycheck')
-						.setDescription('Updates monthly income'),
-				),
 		),
+		// .addSubcommandGroup(subcommandGroup =>
+		// 	subcommandGroup
+		// 		.setName('market')
+		// 		.setDescription('Market Options')
+		// 		.addSubcommand(subcommand =>
+		// 			subcommand
+		// 				.setName('update')
+		// 				.setDescription('Adds users to the market if they are not there already'),
+		// 		)
+		// 		.addSubcommand(subcommand =>
+		// 			subcommand
+		// 				.setName('paycheck')
+		// 				.setDescription('Updates monthly income'),
+		// 		),
+		// ),
 
 	async execute(interaction) {
 		if (interaction.options.getSubcommand() == 'player') {
@@ -40,13 +40,13 @@ module.exports = {
 				else { interaction.reply('*Queue Loop Off*'); }
 			}
 		}
-		else if (interaction.options.getSubcommandGroup() == 'market') {
-			if (interaction.options.getSubcommand() == 'update') {
-				econUserInfo.updateUsers();
-			}
-			else if (interaction.options.getSubcommand() == 'paycheck') {
-				econUserInfo.addAllIncomes();
-			}
-		}
+		// else if (interaction.options.getSubcommandGroup() == 'market') {
+		// 	if (interaction.options.getSubcommand() == 'update') {
+		// 		econUserInfo.updateUsers();
+		// 	}
+		// 	else if (interaction.options.getSubcommand() == 'paycheck') {
+		// 		econUserInfo.addAllIncomes();
+		// 	}
+		// }
 	},
 };
