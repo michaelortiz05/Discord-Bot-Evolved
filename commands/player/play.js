@@ -18,27 +18,23 @@ module.exports = {
         try { await interaction.deferReply(); } 
         catch { }
         
+        connection.loadInteraction(interaction);
+
+        let source = interaction.options.getString('source');
+        console.log(`Command: /play ${source}`);
+
         try {
-			connection.loadInteraction(interaction);
-
-            const source = interaction.options.getString('source');
-            console.log(`Command: /play ${source}`);
-
-            try {
-                const response = await withTimeout(10000, player.addSong, player, source);
-                if (response) { await interaction.editReply(`*Added to Queue:* **${response}**`); }
-                else { interaction.editReply('*No song found*'); }
+            const response = await withTimeout(10000, player.addSong, player, source);
+            if (response) { 
+                await interaction.editReply(`*Added to Queue:* **${response}**`);
+                console.log(`*Added to Queue:* **${response}**`);
             }
-            catch (error) {
-                await interaction.editReply('Odin timed out!');
-                console.log(error);
-            }
-		}
-		catch (error) {
-			interaction.editReply('User must be in voice channel!');
-			console.log(error);
-		}
-
+            else { interaction.editReply('*No song found*'); }
+        }
+        catch (error) {
+            await interaction.editReply(`*Error: ${error}*`);
+            console.log(error);
+        }
 	}
 };
 

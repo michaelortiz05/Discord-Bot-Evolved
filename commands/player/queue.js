@@ -28,7 +28,6 @@ module.exports = {
         for (let actionRow of actionRowList) {
             queueMessages.push(await sendMessage(textChannelId, { components: actionRow }));
         }
-        console.log(queueMessages);
         
         const queueDisplayEmitter = queueDisplay.returnEmitter();
         queueDisplayEmitter.emit('queueDisplay');

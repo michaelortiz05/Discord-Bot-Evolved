@@ -106,6 +106,7 @@ class Player {
 	async playSong() {
 
 		// remakes stream if it has been deleted
+        // TODO this will only work with youtube links
 		if (this.currentSong.audio == null) {
 			const stream = await playdl.stream(this.currentSong.url);
 			const resource = createAudioResource(stream.stream, { inputType: stream.type });
@@ -122,65 +123,69 @@ class Player {
 	async addSong(source) {
 
         // TODO add catch if songs can't be loaded i.e. age restricted videos
-		if (playdl.yt_validate(source) == 'search') {
-			return this.loadSearch(source);
-		}
-		else if (playdl.yt_validate(source) == 'video') {
-			return this.loadUrl(source);
-		}
-	}
-	async loadUrl(source) {
-
-		// playdl.video_basic_info thinks 11 char inputs w/o spaces are video IDs
-		let info;
-		try {
-			info = (await playdl.video_basic_info(source)).video_details;
-		}
-		catch {
-			if (source.length == 11) { this.loadSearch(source); }
-			return;
-		}
-		let stream = playdl.stream(source);
-
-		const url = info.url;
-		const title = info.title;
-		const duration = this.setDuration(info.durationRaw);
-
-		if (connection.subscribe(this.player) instanceof Error) { return; }
-
-        try { stream = await stream; }
-        catch(err) { 
-            console.log(`Error Loading Song: ${err}`)
-            return; 
+        // TODO starting a url with "www" instead of "https" marks it as a search, not a yt_video
+        const searchType = await playdl.validate(source);
+        console.log(searchType);
+        switch (searchType) {
+            case 'search':
+                return this.loadYoutubeVideo(source);
+            case 'yt_video':
+                return this.loadYoutubeVideo(source);
+            case 'yt_playlist':
+                return this.loadYoutubePlaylist(source);
+            default:     
+		        throw "Invalid Search";
         }
-		this.pushSongToQueue(stream, title, url, duration);
-		return title;
 	}
-	async loadSearch(source) {
+	
+	async loadYoutubeVideo(source) {
 		const res = await playdl.search(source, { source: { youtube : 'video' }, limit: 1 });
-		const url = res[0].url;
+        try {
+		    const url = res[0].url;
+        }
+        catch { throw 'Invalid Url!'; }
 
-		let stream;
-		try {
-			stream = playdl.stream(url);
-		}
-		catch {
-            console.log('Could not load song!')
-			return;
-		}
+        let stream = playdl.stream(url);
+
 		const title = res[0].title;
 		const duration = this.setDuration(res[0].durationRaw);
 
-		if (connection.subscribe(this.player) instanceof Error) { return; }
+		if (connection.subscribe(this.player) instanceof Error) { throw 'No users in voice channel!'; }
 
         try { stream = await stream; }
-        catch(err) { 
-            console.log(`Error Loading Song: ${err}`)
-            return; 
+        catch {
+            throw `Error Loading Song: ${source}`;
         }
 		this.pushSongToQueue(stream, title, url, duration);
 		return title;
 	}
+
+    // TODO I may be able to upload all of the songs at once. That would speed this up dramatically!!
+    // TODO this will continue to spit out an error because it takes so long
+    async loadYoutubePlaylist(source) {
+        const playlist = await playdl.playlist_info(source);
+        
+		for (const video of playlist.videos) {
+
+            const url = video.url;
+            let stream = playdl.stream(video.url);
+
+            const title = video.title;
+            console.log(title);
+            const duration = this.setDuration(video.durationRaw);
+    
+            if (connection.subscribe(this.player) instanceof Error) { throw 'No users in voice channel!'; }
+    
+            try { stream = await stream; }
+            catch {
+                throw `Error Loading Song: ${source}`;
+            }
+            this.pushSongToQueue(stream, title, url, duration);
+        }
+
+        return playlist.title;
+    }
+
 	pushSongToQueue(stream, title, url, duration) {
 		const resource = createAudioResource(stream.stream, { inputType: stream.type });
 
@@ -267,6 +272,20 @@ class Player {
 		this.settings[setting] = option;
 		console.log(`${this.settings[setting]} changed to ${option}`);
 	}
+
+    shuffleQueue() {
+        let currentIndex = this.queue.length;
+        let randomIndex;
+
+        while (currentIndex > 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex -= 1;
+
+            const tempSong = this.queue[currentIndex];
+            this.queue[currentIndex] = this.queue[randomIndex];
+            this.queue[randomIndex] = tempSong;
+        }
+    }
 
 	returnCurrentSong() {
 		return this.currentSong;
