@@ -140,58 +140,47 @@ class Player {
 	
 	async loadYoutubeVideo(source) {
 		const res = await playdl.search(source, { source: { youtube : 'video' }, limit: 1 });
+        console.log(res);
+        let url;
         try {
-		    const url = res[0].url;
+		    url = res[0].url;
         }
         catch { throw 'Invalid Url!'; }
-
-        let stream = playdl.stream(url);
 
 		const title = res[0].title;
 		const duration = this.setDuration(res[0].durationRaw);
 
 		if (connection.subscribe(this.player) instanceof Error) { throw 'No users in voice channel!'; }
 
-        try { stream = await stream; }
-        catch {
-            throw `Error Loading Song: ${source}`;
-        }
-		this.pushSongToQueue(stream, title, url, duration);
+		this.pushSongToQueue(title, url, duration);
 		return title;
 	}
 
-    // TODO I may be able to upload all of the songs at once. That would speed this up dramatically!!
-    // TODO this will continue to spit out an error because it takes so long
+
     async loadYoutubePlaylist(source) {
         const playlist = await playdl.playlist_info(source);
         
 		for (const video of playlist.videos) {
 
             const url = video.url;
-            let stream = playdl.stream(video.url);
-
             const title = video.title;
-            console.log(title);
+
             const duration = this.setDuration(video.durationRaw);
+            console.log(title);
     
             if (connection.subscribe(this.player) instanceof Error) { throw 'No users in voice channel!'; }
     
-            try { stream = await stream; }
-            catch {
-                throw `Error Loading Song: ${source}`;
-            }
-            this.pushSongToQueue(stream, title, url, duration);
+            this.pushSongToQueue(title, url, duration);
         }
 
         return playlist.title;
     }
 
-	pushSongToQueue(stream, title, url, duration) {
-		const resource = createAudioResource(stream.stream, { inputType: stream.type });
+	pushSongToQueue(title, url, duration) {
 
 		this.queue.push({
 			title: title,
-			audio: resource,
+			audio: null,
 			url: url,
 			duration: duration });
 		if (!this.isPlaying()) {
@@ -274,6 +263,7 @@ class Player {
 	}
 
     shuffleQueue() {
+        this.currentSong.audio = null;
         let currentIndex = this.queue.length;
         let randomIndex;
 
