@@ -13,15 +13,19 @@ class Player {
 		this.songIndex = -1;
 		this.currentSong = null;
 		this.ttsFilePath = '';
-		this.duration = {
-			hours: 0,
-			minutes: 0,
-			seconds: 0,
-		};
+		this.duration = 0;
         this.endStatus = 'No More Songs in Queue';
 		this.settings = {
 			loop: false,
 		};
+
+        // This client_id is not secret, but rather pulled straight off of a soundcloud webpage. See:
+        // https://stackoverflow.com/questions/40992480/getting-a-soundcloud-api-client-id
+        playdl.setToken({
+            soundcloud : {
+                client_id : "LN3SusIrooc6p3hLaU2ehltKb5u21R3b",
+            }
+        })
 
 		this.player.on('error', (error) => {
 			console.error('Error:', error.message);
@@ -29,7 +33,7 @@ class Player {
 
 		this.player.on('stateChange', (oldState, newState) => {
 			if (newState.status == 'playing') {
-				console.log(`Audio player now playing: ${this.currentSong.title}`);
+				console.log(`Audio player now playing: ${this.currentSong.title} | ${this.currentSong.type}`);
 			}
 			else {
 				console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
@@ -125,6 +129,7 @@ class Player {
         // TODO add catch if songs can't be loaded i.e. age restricted videos
         // TODO starting a url with "www" instead of "https" marks it as a search, not a yt_video
         const searchType = await playdl.validate(source);
+        
         console.log(searchType);
         switch (searchType) {
             case 'search':
@@ -133,63 +138,110 @@ class Player {
                 return this.loadYoutubeVideo(source);
             case 'yt_playlist':
                 return this.loadYoutubePlaylist(source);
+            case 'so_track':
+                return this.loadSoundCloudTrack(source);
+            case 'so_playlist':
+                return this.loadSoundCloudPlaylist(source);
             default:     
 		        throw "Invalid Search";
         }
 	}
 	
 	async loadYoutubeVideo(source) {
-		const res = await playdl.search(source, { source: { youtube : 'video' }, limit: 1 });
-        console.log(res);
-        let url;
+		const song = await playdl.search(source, { source: { youtube : 'video' }, limit: 1 });
+        console.log(song[0].thumbnails);
         try {
-		    url = res[0].url;
+		    const url = song[0].url;
+            const title = song[0].title;
+            const duration = song[0].durationInSec;
+            
+            if (connection.subscribe(this.player) instanceof Error) { throw 'No users in voice channel!'; }
+
+            this.pushSongToQueue(title, url, "yt", duration);
+            return title;
         }
-        catch { throw 'Invalid Url!'; }
-
-		const title = res[0].title;
-		const duration = this.setDuration(res[0].durationRaw);
-
-		if (connection.subscribe(this.player) instanceof Error) { throw 'No users in voice channel!'; }
-
-		this.pushSongToQueue(title, url, duration);
-		return title;
+        catch { throw `Invalid URL for source: ${source}`; }
 	}
 
-
     async loadYoutubePlaylist(source) {
-        const playlist = await playdl.playlist_info(source);
-        
+        let playlist;
+        try {
+            playlist = await playdl.playlist_info(source);
+        }
+        catch { throw `Invalid playlist: ${source}`; }
 		for (const video of playlist.videos) {
-
-            const url = video.url;
-            const title = video.title;
-
-            const duration = this.setDuration(video.durationRaw);
-            console.log(title);
-    
-            if (connection.subscribe(this.player) instanceof Error) { throw 'No users in voice channel!'; }
-    
-            this.pushSongToQueue(title, url, duration);
+            try {
+                const url = video.url;
+                const title = video.title;
+                const duration = video.durationInSec;
+                console.log(title);
+        
+                if (connection.subscribe(this.player) instanceof Error) { throw 'No users in voice channel!'; }
+        
+                this.pushSongToQueue(title, url, "yt", duration);
+            }
+            catch { throw `Invalid URL for source: ${video.url}`; }
         }
 
         return playlist.title;
     }
 
-	pushSongToQueue(title, url, duration) {
+    async loadSoundCloudTrack(source) {
+        const track = await playdl.soundcloud(source);
+        console.log(track);
+        try {
+		    const url = track.permalink;
+            const title = track.name;
+            const duration = track.durationInSec;
+            
+            if (connection.subscribe(this.player) instanceof Error) { throw 'No users in voice channel!'; }
 
+            this.pushSongToQueue(title, url, "so", duration);
+            return title;
+        }
+        catch { throw `Invalid URL for source: ${source}`; }
+    }
+
+    async loadSoundCloudPlaylist(source) {
+        let playlist;
+        try {
+            playlist = await playdl.soundcloud(source);
+        }
+        catch { throw `Invalid playlist: ${source}`; }
+        for (const track of playlist.tracks) {
+            if (track.fetched == false) { break; }
+            try {
+                const url = track.permalink;
+                const title = track.name;
+                const duration = track.durationInSec;
+                console.log(title);
+                
+                if (connection.subscribe(this.player) instanceof Error) { throw 'No users in voice channel!'; }
+    
+                this.pushSongToQueue(title, url, "so", duration);
+            }
+            catch { throw `Invalid URL for source: ${source}`; }
+        }
+        return playlist.name;
+    }
+
+	pushSongToQueue(title, url, type, duration) {
 		this.queue.push({
 			title: title,
 			audio: null,
 			url: url,
+            type: type,
 			duration: duration });
+
+        this.duration += duration;
+
 		if (!this.isPlaying()) {
 			this.playNextSong();
 		}
 	}
 
 	deleteSong(songIndex) {
-        this.removeDuration(this.queue[songIndex].duration);
+        this.duration -= this.queue[songIndex].duration;
         const songTitle = this.queue[songIndex].title;
 
 		if (songIndex == this.songIndex) {
@@ -204,55 +256,19 @@ class Player {
 		this.queue.splice(songIndex, 1);
 	}
 
-	setDuration(durationRaw) {
-		const nColons = durationRaw.split(':').length - 1;
-		let hours, minutes, seconds;
 
-		if (nColons == 0) {
-			hours = 0;
-			minutes = 0;
-			seconds = parseInt(durationRaw);
-		}
-		else if (nColons == 1) {
-			const firstColonIndex = durationRaw.indexOf(':');
-			hours = 0;
-			minutes = parseInt(durationRaw.substring(0, firstColonIndex));
-			seconds = parseInt(durationRaw.substring(firstColonIndex + 1, durationRaw.length));
-		}
-		else {
-			const firstColonIndex = durationRaw.indexOf(':');
-			const secondColonIndex = durationRaw.indexOf(':', firstColonIndex + 1);
-			hours = parseInt(durationRaw.substring(0, firstColonIndex));
-			minutes = parseInt(durationRaw.substring(firstColonIndex + 1, secondColonIndex));
-			seconds = parseInt(durationRaw.substring(secondColonIndex + 1, durationRaw.length));
-		}
-
-		this.duration.hours += hours;
-		this.duration.minutes += minutes;
-		this.duration.seconds += seconds;
-
-		this.duration.minutes += Math.floor(this.duration.seconds / 60);
-		this.duration.seconds = this.duration.seconds % 60;
-		this.duration.hours += Math.floor(this.duration.minutes / 60);
-		this.duration.minutes = this.duration.minutes % 60;
-
-		return { hours: hours, minutes: minutes, seconds: seconds };
-	}
-	removeDuration(duration) {
-		this.duration.hours -= duration.hours;
-		this.duration.minutes -= duration.minutes;
-		this.duration.seconds -= duration.seconds;
-	}
 	displayDuration() {
-		let hourString, minuteString, secondString;
-		if (this.duration.hours < 10) { hourString = `0${this.duration.hours}`; }
-		else { hourString = this.duration.hours.toString(); }
-		if (this.duration.minutes < 10) { minuteString = `0${this.duration.minutes}`; }
-		else { minuteString = this.duration.minutes.toString(); }
-		if (this.duration.seconds < 10) { secondString = `0${this.duration.seconds}`; }
-		else { secondString = this.duration.seconds.toString(); }
+        const seconds = this.duration % 60;
+		let minutes = Math.floor(this.duration / 60);
+        const hours = Math.floor(minutes / 60);
+        minutes = minutes % 60;
 
-		return `${hourString}:${minuteString}:${secondString}`;
+        if (hours == 0) {
+            return `${minutes}:${seconds}`;
+        }
+        else {
+            return `${hours}:${minutes}:${seconds}`;
+        }
 	}
 
 	changeSettings(setting, option) {

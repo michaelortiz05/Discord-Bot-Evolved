@@ -20,16 +20,19 @@ class QueueDisplay {
 
 	returnQueueMessages(queue, songIndex) {
 
+        const queueDisplayMax =  (queue.length < 10 + songIndex) ? queue.length : 10 + songIndex;
         let actionRow = [];
         let actionRowList = [];
-		for (let i = 0; i < queue.length; i++) {
+		for (let i = songIndex; i < queueDisplayMax; i++) {
+            const numString = i.toString();
 			const delSongButton = new ButtonBuilder()
-				.setCustomId('songDel_' + (i).toString())
+				.setCustomId('songDel_' + numString)
 				.setLabel('❌')
 				.setStyle(ButtonStyle.Secondary);
+            const songName = queue[i].title + " │ " + (i + 1).toString() + " │";
 			const songButton = new ButtonBuilder()
-				.setCustomId('songName_' + (i).toString())
-				.setLabel((queue[i].title.length > 80) ? queue[i].title.slice(0, 80) : queue[i].title);
+				.setCustomId('songName_' + numString)
+				.setLabel((songName.length > 80) ? songName.slice(0, 80) : songName);
 			if (i == songIndex) {
 				songButton.setStyle(ButtonStyle.Success);
 			}
@@ -40,11 +43,12 @@ class QueueDisplay {
             actionRow.push(new ActionRowBuilder().addComponents(delSongButton, songButton));
             
             // every 5 rows, action rows are separated into individual messages
-            if (i % 5 == 4 || i == queue.length - 1) {
+            if ((i - songIndex) % 5 == 4 || i == queueDisplayMax - 1) {
                 actionRowList.push(actionRow);
 				actionRow = [];
 			}
 		}
+        
         return actionRowList;
 	}
 
@@ -52,5 +56,6 @@ class QueueDisplay {
         return this.queueDisplayEmitter;
     }
 }
+
 queueDisplay = new QueueDisplay();
 module.exports = { queueDisplay, returnBalanceEmbed };

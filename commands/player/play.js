@@ -27,7 +27,7 @@ module.exports = {
             const response = await withTimeout(10000, player.addSong, player, source);
             if (response) { 
                 await interaction.editReply(`*Added to Queue:* **${response}**`);
-                console.log(`*Added to Queue:* **${response}**`);
+                console.log(`Added to Queue: ${response}`);
             }
             else { interaction.editReply('*No song found*'); }
         }
