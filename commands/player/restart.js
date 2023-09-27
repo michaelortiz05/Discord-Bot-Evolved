@@ -3,13 +3,12 @@ const { player } = require('../../internals/player/player');
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName('shuffle')
-		.setDescription('Randomizes the Order of the Queue, Then Restarts It'),
+		.setName('restart')
+		.setDescription('Restarts the Playlist'),
 
 	async execute(interaction) {
-		player.shuffleQueue();
         player.playDifferentSong(0);
         const user = interaction.member.user.username;
-        interaction.reply(user + ' **shuffled** the playlist!')
+        interaction.reply(user + ' **restarted** the playlist!')
 	},
 };

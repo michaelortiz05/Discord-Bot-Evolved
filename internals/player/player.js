@@ -1,6 +1,7 @@
 const { createAudioPlayer, createAudioResource, AudioPlayerStatus} = require('@discordjs/voice');
 const playdl = require('play-dl');
 const { unlink } = require('fs');
+const fuzzySearch = require('fuzzy-search');
 
 const { connection } = require('./connection');
 const { queueDisplay } = require('../display');
@@ -32,7 +33,8 @@ class Player {
 		});
 
 		this.player.on('stateChange', (oldState, newState) => {
-			if (newState.status == 'playing') {
+			if (newState.status == 'playing' && oldState.status == 'buffering') {
+                connection.sendMessage(`*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
 				console.log(`Audio player now playing: ${this.currentSong.title} | ${this.currentSong.type}`);
 			}
 			else {
@@ -57,8 +59,6 @@ class Player {
 
 			this.currentSong = this.queue[this.songIndex];
 			this.playSong();
-
-			connection.sendMessage(`*Now Playing:*  **${this.currentSong.title}**\n${this.currentSong.url}`);
 		}
 		else if (this.settings.loop == true) {
 			this.songIndex = -1;
@@ -231,7 +231,9 @@ class Player {
 			audio: null,
 			url: url,
             type: type,
-			duration: duration });
+			duration: duration,
+            position: this.queue.length,
+        });
 
         this.duration += duration;
 
@@ -288,9 +290,18 @@ class Player {
             currentIndex -= 1;
 
             const tempSong = this.queue[currentIndex];
+            
             this.queue[currentIndex] = this.queue[randomIndex];
+            this.queue[currentIndex].position = currentIndex;
             this.queue[randomIndex] = tempSong;
+            this.queue[randomIndex].position = randomIndex;
         }
+    }
+
+    fuzzySearchQueue(input) {
+        const searcher = new fuzzySearch(this.queue, ['title']);
+        const song = searcher.search(input);
+        return song[0].position;
     }
 
 	returnCurrentSong() {
